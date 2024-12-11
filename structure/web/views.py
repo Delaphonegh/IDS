@@ -15,8 +15,6 @@ from sqlalchemy import and_, or_, desc
 from flask_mail import Mail, Message
 from datetime import date,datetime
 from structure import db,mail ,photos,app
-from structure.core.forms import FilterForm,SipRequestForm , IssueForm,NumberSearchForm,ExtForm
-from structure.about.forms import AboutForm
 from structure.web.forms import SearchForm ,AddFoodsForm
 from structure.models import User 
 from werkzeug.utils import secure_filename
