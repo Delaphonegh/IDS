@@ -90,7 +90,6 @@ app.config["MAIL_PASSWORD"] = os.environ.get('MAIL_PASSWORD')
 mail = Mail(app)
 # emailpassword = os.environ.get('MAIL_PASSWORD')
 
-from structure.core.views import core
 from structure.users.views import users
 from structure.web.views import web
 from structure.error_pages.handlers import error_pages
@@ -98,7 +97,6 @@ from structure.telafric.views import telafric
 from structure.vtiger.views import vtiger
 
 
-app.register_blueprint(core)
 app.register_blueprint(users)
 app.register_blueprint(web)
 app.register_blueprint(error_pages)
