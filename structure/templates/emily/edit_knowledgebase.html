@@ -1,0 +1,52 @@
+{% extends "web/base.html" %} {% block content %}
+<div class="container margin_60_35">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="box_style_2">
+                <h2 class="inner">Edit Knowledge Base for {{ chatbot.name }}</h2>
+
+                <div class="container">
+                    <div class="row justify-content-center">
+                        <div class="col-md-8">
+                            <div class="card mt-5">
+                                <div class="card-body">
+                                    <form method="POST" enctype="multipart/form-data">
+                                        {{ form.csrf_token }}
+                                        <div class="form-group">
+                                            {{ form.primary_kb.label }}
+                                            {{ form.primary_kb(class="form-control", rows="5", value=knowledgebase.primary_kb) }}
+                                        </div>
+                                        <div class="form-group">
+                                            {{ form.kb_type.label }}
+                                            {{ form.kb_type(class="form-control", value=knowledgebase.kb_type) }}
+                                        </div>
+                                        <div class="form-group">
+                                            {{ form.file.label }}
+                                            {{ form.file(class="form-control-file") }}
+                                            {% if knowledgebase.file %}
+                                            <small class="form-text text-muted">Current file: {{ knowledgebase.file }}</small>
+                                            {% endif %}
+                                        </div>
+                                        <div class="form-group">
+                                            {{ form.image_location.label }}
+                                            {{ form.image_location(class="form-control", value=knowledgebase.image_location) }}
+                                            {% if knowledgebase.image_location %}
+                                            <small class="form-text text-muted">Current image: {{ knowledgebase.image_location }}</small>
+                                            {% endif %}
+                                        </div>
+                                        <div class="form-group">
+                                            {{ form.url.label }}
+                                            {{ form.url(class="form-control", value=knowledgebase.url) }}
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">Update Knowledge Base</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

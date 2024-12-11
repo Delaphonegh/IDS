@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+</head>
+<body>
+    <h1>Dashboard</h1>
+    <h2>Call Logs</h2>
+    <ul>
+        {% for log in call_logs %}
+            <li>{{ log.phone_number }} called {{ log.destination }} for {{ log.duration }} seconds on {{ log.timestamp }}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Payments</h2>
+    <ul>
+        {% for payment in payments %}
+            <li>Payment of {{ payment.amount }} made on {{ payment.paid_at }}</li>
+        {% endfor %}
+    </ul>
+
+    <form action="{{ url_for('telafric.top_up') }}" method="post">
+        <button type="submit">Top Up</button>
+    </form>
+</body>
+</html> 

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Therapy Session</title>
+</head>
+<body>
+    <h1>Therapy Session</h1>
+    <button onclick="startMeeting()">Start Meeting</button>
+    1:
+    <div id="local-video" style="width: 320px; height: 240px;"></div>
+    2:
+    <div id="therapist-video" style="width: 320px; height: 240px;"></div>
+    
+
+    <!-- <script src="https://cdn.agora.io/sdk/release/AgoraRTCSDK-4.0.0.js"></script> -->
+    <script src=" https://cdn.jsdelivr.net/npm/agora-rtc-sdk@3.6.11/AgoraRTCSDK.min.js "></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
+    <script>
+        const agoraAppId = '{{agora_id}}';
+        const channelName = 'Udo';
+        const uid = Math.floor(Math.random() * 1000000).toString();
+        console.log(uid)
+        console.log(agoraAppId)
+
+        const socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'h264' });
+        client.init(agoraAppId, () => console.log('Agora client initialized successfully'), err => console.error(err));
+
+        function startMeeting() {
+            console.log(channelName)
+            console.log(uid)
+            console.log('trying to start meeting')
+            client.join(null, channelName, null, uid, () => console.log('User joined channel successfully'), err => console.error(err));
+            console.log("still working..")
+            navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+            .then(stream => {
+                console.log('Local media access granted:', stream);
+
+                const localStream = AgoraRTC.createStream({ streamID: uid, audio: true, video: true, screen: false });
+                localStream.init(() => {
+                    console.log('Local stream initialized successfully');
+                    localStream.play('local-video');
+                    client.publish(localStream);
+
+                    console.log('Local stream published successfully');
+
+                    // For simplicity, let's handle therapist logic here too
+                    const therapistStream = AgoraRTC.createStream({ streamID: uid, audio: true, video: true, screen: false });
+                    therapistStream.init(() => {
+                        therapistStream.play('therapist-video');
+                        console.log('Therapist stream played successfully');
+                    }, err => console.error(err));
+                }, err => console.error(err));
+            })
+            .catch(error => console.error('Error accessing local media:', error));
+    }
+      
+    </script>
+</body>
+</html>

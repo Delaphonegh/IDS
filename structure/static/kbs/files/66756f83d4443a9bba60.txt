@@ -1,0 +1,69 @@
+New IPs at IS DataCenter
+
+Network Address: 102.22.14.224/28
+Gateway : 102.22.14.225
+Subnet Mask: 255.255.255.240
+Usable Range: 102.22.14.226 to 102.22.14.238
+102.22.14.226 	Proxmox Server (Dell PowerEdge R720) 	Active
+102.22.14.227 	Cellulant PBX 	Active
+102.22.14.228 	DLPpbx 	Active
+102.22.14.229 	Bookstack 	Active
+102.22.14.230 	Inpath-PBX 	Active
+102.22.14.231 	Zabbix 	Active
+102.22.14.232 	Office-PBX 	Active
+102.22.14.233 	WisdomInt-PBX 	Active
+102.22.14.234 	Ecom 	Active
+102.22.14.235 	UPT 	Active
+102.22.14.236 	Starbite-PBX 	Active
+102.22.14.237 	Microensure Secondary 	Active
+102.22.14.238 	SharedFolder 	Active
+102.22.14.239 	Broadcast IP 	 
+  	  	 
+  	  	 
+
+Network Address: 102.22.15.128/28
+Gateway : 102.22.15.129
+Subnet Mask: 255.255.255.240
+Usable Range: 102.22.15.130 - 102.22.15.142
+IP  	Host 	Status
+  	  	 
+102.22.15.130 	Apex-PBX 	Working
+102.22.15.131 	Likitachatwoot 	Working
+102.22.15.132 	Telafric 	Working
+102.22.15.133 	Issabel 5 Test 	 Working
+102.22.15.134 	Unknown 	Working
+102.22.15.135 	Rack pve2 	 Working
+102.22.15.136 	
+
+Guacamole
+	Working
+102.22.15.137 	
+
+TrueNAS
+	Working
+102.22.15.138 	*demopbx 	Working
+102.22.15.139 	InpathsClient 	Working
+102.22.15.140 	MicroEnsure 	Working
+102.22.15.141 	Steaman 	Working
+102.22.15.142 	TBD(Site cannot be reached) 	Working
+  	  	 
+
+Network Address: 102.22.20.112/28
+
+Gateway : 102.22.20.113
+Subnet Mask: 255.255.255.240
+Usable Range: 102.22.20.114 - 102.22.20.126
+IP  	Host 	Status
+102.22.20.114 	pbxtemplate 	Working
+102.22.20.115 	IDRAC 	Working
+102.22.20.116 	NOC Chatwoot 	Working
+102.22.20.117 	Inpath3CX 	Working
+102.22.20.118 	Old ASTPP billing platform 	Working
+102.22.20.119 	OM 3CX 	Working
+102.22.20.120 	Voip Gateway 	 Working
+102.22.20.121 	Delta Proxmox 	Working
+102.22.20.122 	NOCTEST 	Working
+102.22.20.123 	Springboard3CX 	Working
+102.22.20.124 	Hormann 	Working
+102.22.20.125 	PlaygroundPBX 	Working
+102.22.20.126 	NAS 	Working

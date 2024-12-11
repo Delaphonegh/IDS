@@ -1,0 +1,796 @@
+{{template "main-layout" .}}
+
+{{define "PageTitle"}}Digital Receptionists{{end}}
+
+{{define "PageHead"}}
+  <link rel="stylesheet" href='{{AbsolutePath "/assets/css/dataTables.bootstrap5.min.css"}}'>
+{{end}}
+
+{{define "PageContent"}}
+  <div class="container-fluid">
+    <div class="card bg-info-subtle shadow-none position-relative overflow-hidden mb-4">
+      <div class="card-body px-4 py-3">
+        <div class="row align-items-center">
+          <div class="col-9">
+            <h4 class="fw-semibold mb-8">Voice Blasts</h4>
+            <nav aria-label="breadcrumb">
+              <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                  <a class="text-muted text-decoration-none" href="/">Home</a>
+                </li>
+                <li class="breadcrumb-item" aria-current="page">Voice Blasts</li>
+              </ol>
+            </nav>
+          </div>
+          <div class="col-3">
+            <div class="text-center mb-n5">
+              <img src="{{AbsolutePath "/assets/images/breadcrumb/ChatBc.png"}}" alt="" class="img-fluid mb-n4">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body d-flex justify-content-end">
+        <button type="button" class="btn btn-md mb-1 me-1 bg-primary-subtle fs-3"
+                data-bs-toggle="modal" data-bs-target="#add-voiceblast-modal">
+          <i class="ti ti-send fs-3 text-center"></i>
+          Add Voice Blast
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <ul class="nav nav-pills user-profile-tab" id="pills-tab" role="tablist">
+        {{/* IVR Tab Button */}}
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link position-relative active rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-4"
+            id="pills-account-tab" data-bs-toggle="pill" data-bs-target="#pills-account" type="button" role="tab"
+            aria-controls="pills-account" aria-selected="true">
+            <i class="ti ti-history me-2 fs-6"></i>
+            <span class="d-none d-md-block">Voice Blasts</span>
+          </button>
+        </li>
+
+        {{/* CDRs Tab Button */}}
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-4"
+            id="pills-applications-tab" data-bs-toggle="pill" data-bs-target="#pills-applications" type="button"
+            role="tab"
+            aria-controls="pills-bills" aria-selected="false">
+            <i class="ti ti-send me-2 fs-6"></i>
+            <span class="d-none d-md-block">Voice Blast Reports</B></span>
+          </button>
+        </li>
+      </ul>
+
+      {{/* Tab Contents */}}
+      <div class="card-body">
+        <div class="tab-content" id="pills-tabContent">
+          {{/* IVR Tab Content */}}
+          <div class="tab-pane fade show active" id="pills-account" role="tabpanel" aria-labelledby="pills-account-tab"
+               tabindex="0">
+            <div class="row">
+              {{/* Avatar Card*/}}
+              <div class="col-lg-12 d-flex align-items-stretch">
+                <div class="card w-100 position-relative overflow-hidden">
+                  <div class="card-body p-4">
+                    <div class="table-responsive">
+                      <table class="table table-hover align-middle mb-0 text-nowrap" id="voiceblast-table">
+                        <thead>
+                        <tr>
+                          <th>Name</th>
+                          <th>Start Date</th>
+                          <th>Description</th>
+                          <th>Status</th>
+                          <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                          {{/*}}
+                        {{range .VoiceBlasts}}
+                          <tr >
+                            <td class="ps-0">{{.BroadcastName}}</td>
+                            <td class="ps-0">empty for now</td>
+                            <td class="ps-0"> empty for now too<br>
+                                <td class="ps-0">
+                                empty for now
+                              </td>
+
+                              <td class="ps-0">
+                                <div class="btn-group" role="group" aria-label="Campaign Actions">
+                                  <button type="button" class="btn btn-success btn-sm" onclick="startRobocall('{{ .BroadcastUUID }}')">Start</button>
+                                  <button type="button" class="btn btn-warning btn-sm" onclick="updateCampaignStatus('pause', {{ .BroadcastUUID }})">Pause</button>
+                                  <button type="button" class="btn btn-danger btn-sm" onclick="stopRobocall('{{ .BroadcastUUID }}')">Stop</button>
+                                  <button type="button" class="btn btn-secondary btn-sm" onclick="deleteCampaign({{ .BroadcastUUID }})">Delete</button>
+                                </div>
+                              </td>
+
+                             
+
+                         
+                          </tr>
+                        {{else}}
+                          <tr>
+                            <td class="ps-0" colspan="5">
+                              <p class="alert alert-info">
+                                <i class="ti ti-info-circle"></i> No Voice Blasts created at the moment
+                              </p>
+                            </td>
+                          </tr>
+                        {{end}}
+                        {{*/}}
+                        </tbody>
+                      </table>
+                    </div>
+                    <nav aria-label="...">
+                      <ul class="pagination justify-content-center mb-0 mt-4">
+                        <!-- <li class="page-item">
+                          <a class="page-link border-0 rounded-circle text-dark round-32 d-flex align-items-center justify-content-center" href="javascript:void(0)">
+                            <i class="ti ti-chevron-left"></i>
+                          </a>
+                        </li> -->
+
+                        {{range $i, $v := .ButtonCount}}
+                        {{$num := Inc $i}}
+                        <li class="page-item active" aria-current="page">
+                          <a class="page-link border-0 rounded-circle round-32 mx-1 d-flex align-items-center justify-content-center" href='{{AbsolutePath "/voiceblasts?page="}}{{$num}}'>{{$num}}</a>
+                        </li>
+                        {{end}}
+           
+                        <!-- <li class="page-item">
+                          <a class="page-link border-0 rounded-circle text-dark round-32 d-flex align-items-center justify-content-center" href="javascript:void(0)">
+                            <i class="ti ti-chevron-right"></i>
+                          </a>
+                        </li> -->
+
+                      </ul>
+                    </nav>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {{/* CDRs Tab Content */}}
+          <div class="tab-pane fade" id="pills-applications" role="tabpanel"
+               aria-labelledby="pills-applications-tab" tabindex="0">
+            <div class="row">
+              <div class="col-12">
+                <div class="card">
+                  <div class="card-body p-4">
+                    <h4 class="fw-semibold mb-1">Call Reportss</h4>
+                    <div class="d-flex align-items-center justify-content-between pb-7">
+                      <p class="mb-0">View your call reports</p>
+
+                    
+                    </div>
+
+                    <div class="table-responsive">
+                      <table class="table table-hover align-middle mb-0 text-nowrap" id="cdr-table">
+                        <thead>
+                          <tr>
+                            <th>Date</th>
+                            <th>Campaign Name</th>
+                            <th>Caller ID</th>
+                            <th>Called Destination</th>
+                            <th>Duration</th>
+                            <th>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {{/*}}
+                          {{range .CDRs}}
+                          <tr>
+                            <td>{{.StartStamp}}</td>
+                            <td>{{.CallerIDNumber}}</td>
+                            <td>{{.DestinationNumber}}</td>
+                            <td>{{.Duration}} sec</td>
+                            <td>
+                              {{if eq .Direction "inbound"}}
+                                <span class="badge bg-success">Inbound</span>
+                              {{else}}
+                                <span class="badge bg-primary">Outbound</span>
+                              {{end}}
+                            </td>
+                            <td>
+                              {{if eq .HangupCause "NORMAL_CLEARING"}}
+                                <span class="badge bg-success">Completed</span>
+                              {{else if eq .HangupCause "NO_ANSWER"}}
+                                <span class="badge bg-warning">No Answer</span>
+                              {{else if eq .HangupCause "USER_BUSY"}}
+                                <span class="badge bg-info">Busy</span>
+                              {{else if eq .HangupCause "ORIGINATOR_CANCEL"}}
+                                <span class="badge bg-secondary">Cancelled</span>
+                              {{else}}
+                                <span class="badge bg-danger">{{.HangupCause}}</span>
+                              {{end}}
+                            </td>
+                          </tr>
+                          {{else}}
+                          <tr>
+                            <td colspan="7">
+                              <p class="alert alert-info">No call records available.</p>
+                            </td>
+                          </tr>
+                          {{end}}
+                          {{*/}}
+                        </tbody>
+                      </table>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{/* Confirm sender id deletion */}}
+  <div id="modal-confirm-voiceblast-delete" class="modal fade" tabindex="-1" style="display: none;" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5>Confirm Deletion</h5>
+        </div>
+
+        <div class="modal-body">
+          <h4 class="text-danger">Are you sure?</h4>
+          <p id="voiceblast-warning-msg">Are you sure you want to delete the voiceblast?</p>
+        </div>
+
+        <div class="modal-footer d-flex justify-content-between">
+          <div id="delete-voiceblast-feedback">
+          </div>
+
+          <div class="d-flex justify-content-end">
+            <button class="btn btn-sm btn-info" type="button" data-bs-dismiss="modal">
+              No! Go back
+            </button>
+
+            <button class="btn btn-sm btn-danger ms-2" type="button" onclick="deletevoiceblast(event)"
+                    id="voiceblast-confirm-delete-btn">
+              Yes! Delete
+            </button>
+          </div>
+
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div> <!-- Confirm sender id deletion modal -->
+
+ 
+  {{/*Application Details/Edit Modal */}}
+  <div id="app-details-modal" class="modal fade" tabindex="-1" style="display: none;" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5><i class="ti ti-app-window"></i> View or Edit Application Details</h5>
+        </div>
+
+        <div class="modal-body">
+          <div class="row">
+            {{/* Application Details Edit Form */}}
+            <div class="col">
+              <h5>Application Details</h5>
+              <ul class="mb-5 list-group list-group-flush">
+                <li class="list-group-item d-flex justify-content-between align-items-start">
+                  <div class="me-auto">
+                    <div class="fw-bold">Name</div>
+                    <span id="edit-display-app-name"></span>
+                  </div>
+                </li>
+
+                <li class="list-group-item d-flex justify-content-between align-items-start">
+                  <div class="me-auto">
+                    <div class="fw-bold">App ID</div>
+                    <code id="edit-display-app-id"></code>
+                  </div>
+                </li>
+
+                <li class="list-group-item d-flex justify-content-between align-items-start">
+                  <div class="me-auto">
+                    <div class="fw-bold">App Secret</div>
+                    <code
+                      data-bs-toggle="tooltip"
+                      data-bs-title="Click to copy"
+                      style="cursor: pointer;
+                          word-break: break-all"
+                      id="edit-display-app-secret"></code>
+                  </div>
+                </li>
+
+                <li class="list-group-item d-flex justify-content-between align-items-start">
+                  <div class="me-auto">
+                    <div class="fw-bold">Date Created</div>
+                    <span id="edit-display-app-date-created"></span>
+                  </div>
+                </li>
+              </ul>
+
+              <h5>Edit/Update Form</h5>
+              <form class="ps-3 pr-3" name="edit-app-form" id="edit-app-form">
+                <div class="mb-3">
+                  <label for="edit-app-name">Name</label>
+                  <input class="form-control" name="app-name" type="text" id="edit-app-name" required
+                         placeholder="eg. Ecommerce Mobile App">
+                </div>
+
+                <div class="mb-3">
+                  <label for="edit-description">Description</label>
+                  <textarea class="form-control" name="description" id="edit-description" cols="30" rows="3"
+                            required></textarea>
+                </div>
+
+                <div class="mb-3">
+                  <label for="edit-webhook-url">Webhook URL</label>
+                  <input class="form-control" name="edit-webhook-url" type="url" id="edit-webhook-url" required
+                         placeholder="eg. https://example.com/delaphone/webhook">
+                </div>
+
+                <div class="row mt-4">
+                  <div class="col-12">
+                    <p class="mb-2">Edit Application Scopes</p>
+
+                    {{range .Products}}
+                      <p>{{.Name}}</p>
+                      {{range .Scopes}}
+                        <div class="form-check py-2 form-switch mb3">
+                          <input class="form-check-input" value="{{.}}" type="checkbox" id="edit-{{.}}"
+                                 name="edit-scopes">
+                          <label class="form-check-label" for="edit-{{.}}">{{.}}</label>
+                        </div>
+                      {{end}}
+                      <hr>
+                    {{else}}
+                      <p class="alert alert-danger">No products available at the moment</p>
+                    {{end}}
+
+                  </div>
+                </div>
+
+                <div class="d-flex justify-content-end">
+                  <button class="btn btn-sm bg-info-subtle text-info" form="gen-key-form" id="create-app-form-button"
+                          type="submit">
+             
+                    Update
+                  </button>
+                </div>
+
+
+              </form>
+            </div>
+          </div>
+        </div> <!-- Modal Body -->
+
+        <div class="modal-footer d-flex justify-content-between">
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div> <!-- Application detail modal -->
+  {{/* Add Voiceblast Modal */}}
+<div id="add-voiceblast-modal" class="modal fade" tabindex="-1" style="display: none;" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-lg"> <!-- Added modal-lg for wider form -->
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5><i class="ti ti-send me-1"></i>Add Voiceblast</h5>
+      </div>
+
+      <div class="modal-body">
+        <form class="ps-3 pr-3" name="add-voiceblast-form" id="add-voiceblast-form">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="robocall_name">Name</label>
+                <input type="text" name="robocall_name" id="robocall_name" class="form-control" required>
+              </div>
+            </div>
+            <!-- <div class="col-md-6">
+              <div class="mb-3">
+                <label for="robocall_extension">Extension</label>
+                <input type="text" name="robocall_extension" id="robocall_extension" class="form-control" required>
+              </div>
+            </div> -->
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="robocall_description">Description (IVR Greeting)</label>
+                <textarea class="form-control" name="robocall_description" id="robocall_description" rows="3" required></textarea>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="robocall_start_time">Start Time</label>
+                <input type="datetime-local" name="robocall_start_time" id="robocall_start_time" class="form-control" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="robocall_timeout">Timeout (milliseconds)</label>
+                <input type="number" name="robocall_timeout" id="robocall_timeout" class="form-control" value="10000" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="robocall_concurrent_limit">Concurrent Limit</label>
+                <input type="number" name="robocall_concurrent_limit" id="robocall_concurrent_limit" class="form-control" value="1" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="recording_uuid">Recording UUID</label>
+                <select class="form-control" name="recording_uuid" id="recording_uuid" required>
+                  <option value="">Select Audio File</option>
+                  {{range .AudioFiles}}
+                    <option value="{{.AudioUUID}}">{{.RecordingFilename}}</option>
+                  {{end}}
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="invalid_file_uuid">Invalid File UUID</label>
+                <select class="form-control" name="invalid_file_uuid" id="invalid_file_uuid" required>
+                  <option value="">Select Invalid Audio File</option>
+                  {{range .AudioFiles}}
+                    <option value="{{.AudioUUID}}">{{.RecordingFilename}}</option>
+                  {{end}}
+                </select>
+              </div>
+            </div>
+          </div>
+
+
+          <div class="row">
+            <!-- <div class="col-md-6">
+              <div class="mb-3">
+                <label for="robocall_caller_id_name">Caller ID Name</label>
+                <input type="text" name="robocall_caller_id_name" id="robocall_caller_id_name" class="form-control" required>
+              </div>
+            </div> -->
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="robocall_caller_id_number">Caller ID Number</label>
+                <select class="form-control" name="robocall_caller_id_number" id="robocall_caller_id_number" required>
+                  <option value="">Select a Caller ID</option>
+                  {{range .MyDIDs}}
+                 <option value="{{.DestinationNumber}}">{{.DestinationNumber}}</option>
+                {{else}}
+                  <option>
+                    There are no DIDs
+                  </option>
+                {{end}}
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="phonebook_select">Select Phonebook</label>
+                <select class="form-control" name="phonebook_select" id="phonebook_select" required>
+                  <option value="">Choose a Phonebook</option>
+                  {{range .Phonebooks}}
+                    <option value="{{.ID}}">{{.Name}}</option>
+                  {{end}}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-span-2">
+            <label for="robocall_phone_numbers">Phone Numbers (one per line)</label>
+            <textarea class="form-control" name="robocall_phone_numbers" id="robocall_phone_numbers" rows="5" required></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+      </div>
+
+      <div class="modal-footer d-flex justify-content-between">
+        <p id="add-voiceblast-form-feedback"></p>
+        <button class="btn btn-md bg-info-subtle text-info" form="add-voiceblast-form" type="submit">
+          Send
+        </button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div> <!-- Add voiceblast modal -->
+{{end}}
+
+{{define "PageScripts"}}
+<script src='{{AbsolutePath "/assets/js/jquery.dataTables.min.js"}}'></script>
+<script src='{{AbsolutePath "/assets/js/dataTables.buttons.min.js"}}'></script>
+<script src='{{AbsolutePath "/assets/js/jszip.min.js"}}'></script>
+<script src='{{AbsolutePath "/assets/js/pdfmake.min.js"}}'></script>
+<script src='{{AbsolutePath "/assets/js/vfs_fonts.js"}}'></script>
+<script src='{{AbsolutePath "/assets/js/buttons.html5.min.js"}}'></script>
+<script src='{{AbsolutePath "/assets/js/buttons.print.min.js"}}'></script>
+<script src='{{AbsolutePath "/assets/js/luxon.min.js"}}'></script>
+  <script src="/assets/js/pages/voiceblast.js" type="module"></script>
+
+  <script>
+    (function () {
+      // Place all applications in sessionStorage
+      sessionStorage.setItem("applications", JSON.stringify({{.AuthUser.ClientApps}}))
+    })();
+
+    const deletevoiceblastConfirmationModal = new bootstrap.Modal('#modal-confirm-voiceblast-delete');
+
+    function showDeletevoiceblastConfirmation(e) {
+      e.preventDefault();
+      document.getElementById("voiceblast-warning-msg").innerHTML = `You are about to delete the following sender id: <b class="fs-4">"${e.target.dataset.voiceblastName}"</b>`;
+      let deleteBtn = document.getElementById("voiceblast-confirm-delete-btn")
+      deleteBtn.dataset.voiceblast = e.target.dataset.voiceblast;
+
+      deleteBtn.dataset.voiceblastName = e.target.dataset.voiceblastName;
+      deletevoiceblastConfirmationModal.toggle();
+    }
+
+    function deletevoiceblast(e) {
+      let feedback = document.getElementById("delete-voiceblast-feedback");
+      feedback.innerHTML = null;
+      feedback.innerHTML = `<p class="alert alert-warning p-1">Please wait...</p>`;
+      fetch(AbsolutePath("/api/voiceblasts"), {
+        method: "DELETE",
+        body: JSON.stringify({id: e.target.dataset.voiceblast, name: e.target.dataset.voiceblastName}),
+        headers: {"Content-Type": "application/json"}
+      }).then(res => res.json())
+        .then(payload => {
+          if (!payload.ok) {
+            feedback.innerHTML = `<p class="alert alert-danger p-1">${payload.msg}</p>`
+            return;
+          }
+
+          feedback.innerHTML = `<p class="alert alert-success p-1">${payload.msg}</p>`
+          setTimeout(() => {
+            feedback.innerHTML = null;
+            window.location.reload()
+          }, 1500);
+        })
+    }
+
+   
+
+    // Handle new app form submission.
+    let voiceblastForm = document.getElementById("add-voiceblast-form");
+    let voiceblastFormFeedback = document.getElementById("add-voiceblast-form-feedback");
+    voiceblastForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      voiceblastFormFeedback.innerHTML = null;
+      voiceblastFormFeedback.innerHTML = `<small class="alert alert-warning p-1 m-1">Processing...</small>`;
+
+      let formData = new FormData(voiceblastForm);
+      fetch(AbsolutePath("/api/voiceblasts"), {
+        method: "POST",
+        body: formData,
+      }).then(res => res.json())
+        .then(payload => {
+          console.log("payload")
+          console.log(payload)
+          if (!payload.ok) {
+            voiceblastFormFeedback.innerHTML = `<small class="alert alert-danger p-1 m-1">${payload.msg}</small>`;
+            return;
+          }
+
+          voiceblastForm.reset();
+          voiceblastFormFeedback.innerHTML = `<small class="alert alert-success p-1 m-1">${payload.msg}</small>`;
+
+          setTimeout(() => {
+            window.location.reload()
+          }, 1500)
+        }).catch((err) => {
+        if (err) {
+          voiceblastFormFeedback.innerHTML = `<small class="alert alert-danger p-1 m-1">Request failed. An internal error occurred</small>`;
+        }
+      })
+    });
+
+    // Handle row click for full application details
+    const appDetailsModal = new bootstrap.Modal('#app-details-modal', {});
+    let rows = document.getElementsByClassName("app-row");
+    for (const row of rows) {
+      row.addEventListener("click", function (e) {
+        console.log(row.dataset);
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        e.stopPropagation();
+
+        let appDetails = Array.from(JSON.parse(sessionStorage.getItem("applications"))).filter((app) => app.id === row.dataset.appId)[0];
+        console.log(appDetails);
+        document.getElementById("edit-app-name").value = appDetails.name;
+        document.getElementById("edit-webhook-url").value = appDetails.webhook_url;
+        document.getElementById("edit-description").value = appDetails.description;
+
+
+        let editScopes = document.querySelectorAll("[name=edit-scopes]");
+        for (let editScope of editScopes) {
+          for (let appScope of appDetails.scopes) {
+            if (appScope === editScope.value) {
+              editScope.checked = true;
+            }
+          }
+        }
+
+        document.getElementById("edit-display-app-name").innerText = appDetails.name;
+        document.getElementById("edit-display-app-id").innerText = appDetails.id;
+        document.getElementById("edit-display-app-secret").innerText = row.dataset.appSecret;
+        let dateCreated = new Date(appDetails.date_created);
+        document.getElementById("edit-display-app-date-created").innerText = dateCreated.toLocaleString('en-US', {
+          weekday: 'short',
+          day: '2-digit',
+          month: 'long',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hourCycle: 'h12'
+        }).replace(/,/g, '');
+
+
+        appDetailsModal.show();
+      });
+    }
+
+
+    function updateCampaignStatus(action, campaignID) {
+  let status;
+  switch (action) {
+    case 'start':
+      status = 1;
+      break;
+    case 'pause':
+      status = 2;
+      break;
+    case 'stop':
+      status = 3;
+      break;
+    default:
+      console.error("Unknown action:", action);
+      return;
+  }
+
+  fetch(AbsolutePath("/api/voiceblasts/status"), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: `campaignID=${campaignID}&status=${status}`
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.ok) {
+      alert(`Campaign ${action}ed successfully!`);
+      setTimeout(() => {
+            window.location.reload()
+          }, 1500)
+    } else {
+      alert(`Failed to ${action} campaign: ${data.msg}`);
+      setTimeout(() => {
+            window.location.reload()
+          }, 1500)
+    }
+  })
+  .catch(error => console.error('Error:', error));
+}
+
+  </script>
+
+  <!-- <script>
+    //Setting default start date and end date
+    document.addEventListener('DOMContentLoaded', function() {
+  // Get the current date
+  let now = new Date();
+  
+  // Set start of the current day
+  let startOfDay = new Date(now);
+  startOfDay.setHours(0, 0, 0, 0);
+  
+  // Set end of the current day
+  let endOfDay = new Date(now);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  // Format date to 'yyyy-MM-ddTHH:mm'
+  function formatDate(date) {
+    let year = date.getFullYear();
+    let month = ('0' + (date.getMonth() + 1)).slice(-2);
+    let day = ('0' + date.getDate()).slice(-2);
+    let hours = ('0' + date.getHours()).slice(-2);
+    let minutes = ('0' + date.getMinutes()).slice(-2);
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+
+  // Set default daily start time to 7 AM
+  let dailyStartTime = "07:00";
+  
+  // Set default daily stop time to 7 PM
+  let dailyStopTime = "19:00";
+
+  
+  // Set default values
+  // document.getElementById('startingdate').value = formatDate(startOfDay);
+  // document.getElementById('expirationdate').value = formatDate(endOfDay);
+  // document.getElementById('dailystarttime').value = dailyStartTime;
+  // document.getElementById('dailystoptime').value = dailyStopTime;
+});
+
+  </script> -->
+
+
+<!-- <script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // Get the current day of the week (0 - Sunday, 1 - Monday, ..., 6 - Saturday)
+    const today = new Date().getDay();
+    // Map the days to the checkbox ids
+    const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+    // Check the checkbox for the current day
+    document.getElementById(days[today]).checked = true;
+  });
+</script> -->
+
+
+<script>
+  function startRobocall(robocallUUID) {
+      fetch(AbsolutePath("/api/robocall/start"), {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: `robocallUUID=${robocallUUID}`
+      })
+      .then(response => response.json())
+      .then(data => {
+          if (data.ok) {
+              alert(`Robocall started successfully!`);
+              setTimeout(() => {
+                  window.location.reload();
+              }, 1500);
+          } else {
+              alert(`Failed to start robocall: ${data.msg}`);
+          }
+      })
+      .catch(error => console.error('Error:', error));
+  }
+  </script>
+
+
+<script>
+  function stopRobocall(robocallUUID) {
+      console.log("stopRobocall", robocallUUID)
+      fetch(AbsolutePath("/api/robocall/stop"), {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: `robocallUUID=${robocallUUID}`
+      })
+      .then(response => response.json())
+      .then(data => {
+          if (data.ok) {
+              alert(`Robocall stopped successfully!`);
+              setTimeout(() => {
+                  window.location.reload();
+              }, 1500);
+          } else {
+              alert(`Failed to stop robocall: ${data.msg}`);
+          }
+      })
+      .catch(error => console.error('Error:', error));
+  }
+  </script>
+{{end}}
+

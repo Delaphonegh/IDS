@@ -1,0 +1,102 @@
+{% extends "web/base.html" %} {% block content %} <!-- Content ================================================== -->
+<div class="container margin_60_35">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="box_style_2">
+                <h2 class="inner">Chat with {{ chatbot.name }}</h2>
+                <!-- End box_style_1 -->
+                <div class="container">
+                    <div class="row justify-content-center">
+                        <div class="col-md-8">
+                            <div class="card mt-5">
+                                <div class="card-header">
+                                    <h3 class="text-center">{{chat.name}}</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chat-container" id="chat-container">
+                                        <!-- Old messages will be displayed here -->
+                                        {% for message in conversation_history %}
+                                        <div class="message {{ message.role }}-message">{{ message.content }}</div>
+                                        {% endfor %}
+                                    </div>
+                                    <form id="chat-form">
+                                        <div class="input-group mb-3">
+                                            <input type="text" class="form-control" id="user-input" placeholder="Type your message...">
+                                            <div class="input-group-append">
+                                                <button class="btn btn-primary" type="submit">Send</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- End container -->
+            <!-- End Content =============================================== -->
+            <script>
+                const chatContainer = document.getElementById('chat-container');
+                const chatForm = document.getElementById('chat-form');
+                const userInput = document.getElementById('user-input');
+
+                chatForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const userMessage = userInput.value;
+                    if (userMessage.trim() === '') return;
+                    appendMessage('user', userMessage);
+                    userInput.value = '';
+                    const response = await fetchChatResponse(userMessage);
+                    appendMessage('bot', response);
+                });
+
+                async function fetchChatResponse(userMessage) {
+                    const response = await fetch('/chat/{{ chatbot.id }}/{{ chat_id }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ user_input: userMessage }),
+                    });
+                    if (response.ok) {
+                        const data = await response.text();
+                        return data;
+                    } else {
+                        console.error('Error:', response.status);
+                        return 'Sorry, something went wrong.';
+                    }
+                }
+
+                function appendMessage(sender, message) {
+                    const messageElement = document.createElement('div');
+                    messageElement.classList.add('message', `${sender}-message`);
+                    messageElement.textContent = message;
+                    chatContainer.appendChild(messageElement);
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }
+            </script>
+            <style>
+                .chat-container {
+                    height: 300px;
+                    overflow-y: auto;
+                    border: 1px solid #ccc;
+                    padding: 10px;
+                }
+                .message {
+                    padding: 10px;
+                    margin-bottom: 10px;
+                    border-radius: 5px;
+                }
+                .user-message {
+                    background-color: #007bff;
+                    color: white;
+                    text-align: right;
+                }
+                .bot-message {
+                    background-color: #f8f9fa;
+                    text-align: left;
+                }
+            </style>
+        </div>
+    </div>
+</div>
+{% endblock %}
