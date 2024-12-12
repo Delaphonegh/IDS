@@ -151,10 +151,12 @@ def get_rate():
     if not destination:
         return jsonify({"error": "Missing destination"}), 400
 
-    # Find the most specific matching prefix
-    matching_rates = Rate.query.filter(
-        Rate.destination_prefix.op('~')(f"^{destination[:20]}")
-    ).all()
+    # Find applicable rate by checking prefixes manually
+    matching_rates = []
+    all_rates = Rate.query.all()
+    for rate in all_rates:
+        if destination.startswith(rate.destination_prefix):
+            matching_rates.append(rate)
     
     if not matching_rates:
         return jsonify({"error": "No rate found for this destination"}), 404
@@ -255,10 +257,12 @@ def check_credit():
     if not subscriber:
         return jsonify({"error": "Subscriber not found"}), 404
 
-    # Find applicable rate
-    matching_rates = Rate.query.filter(
-        Rate.destination_prefix.op('~')(f"^{destination[:20]}")
-    ).all()
+    # Find applicable rate by checking prefixes manually
+    matching_rates = []
+    all_rates = Rate.query.all()
+    for rate in all_rates:
+        if destination.startswith(rate.destination_prefix):
+            matching_rates.append(rate)
     
     if not matching_rates:
         return jsonify({"error": "No rate found for this destination"}), 404
