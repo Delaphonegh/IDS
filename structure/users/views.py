@@ -64,38 +64,29 @@ def register():
 
 @users.route('/login', methods=['GET', 'POST'])
 def login():
-
     form = LoginForm()
     if form.validate_on_submit():
-        # Grab the user from our User Models table
-        user = User.query.filter_by(email=form.email.data).first()
-        
-        
-        userr = User.query.filter_by(email=form.email.data).first()
-        
+        # Grab the user based on email or phone number
+        user_input = form.email.data  # You can rename this to something like 'login_input' in the form
+        user = User.query.filter((User.email == user_input) | (User.phone_number == user_input)).first()
 
-
-        if user is not None and user.check_password(form.password.data)  :
-            #Log in the user
-            session['name'] = userr.name
-            session['email'] = form.email.data
+        if user is not None and user.check_password(form.password.data):
+            # Log in the user
+            session['name'] = user.name
+            session['email'] = user.email
             session['id'] = user.id
             if user.is_organization:
                 session['organization'] = user.organization_id
-            print("session")
-            print(session['name'])
             login_user(user)
             flash('Logged in successfully.')
 
             # If a user was trying to visit a page that requires a login
-            # flask saves that URL as 'next'.
             next = request.args.get('next')
 
             # So let's now check if that next exists, otherwise we'll go to
             # the welcome page.
-            if next == None or not next[0]=='/':
+            if next is None or not next.startswith('/'):
                 next = url_for('telafric.dashboard')
-            
 
             return redirect(next)
         else:
@@ -104,9 +95,8 @@ def login():
 
             # So let's now check if that next exists, otherwise we'll go to
             # the welcome page.
-            if next == None or not next[0]=='/':
+            if next is None or not next.startswith('/'):
                 next = url_for('chats')
-            
 
             return redirect(next)
     return render_template('user/signin.html', form=form)
