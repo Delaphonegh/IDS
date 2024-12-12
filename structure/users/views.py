@@ -65,14 +65,21 @@ def register():
 @users.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
-    if request.method == "POST":
+    if request.method =="POST":
         # Grab the user based on email or phone number
         user_input = form.email.data  # This can still be named 'email' for the input field
         user = User.query.filter((User.email == user_input) | (User.phone_number == user_input)).first()
 
         if user is not None:
             # Check if the entered password matches either the user's password or pin code
-            if user.check_password(form.password.data) or form.password.data == user.pin_code:
+            password_is_valid = False
+            
+            # Check if the user has a password set
+            if user.password_hash:  # Ensure the user has a password
+                password_is_valid = user.check_password(form.password.data)
+
+            # Allow login if the password is valid or if the pin code matches
+            if password_is_valid or form.password.data == user.pin_code:
                 # Log in the user
                 session['name'] = user.name
                 session['email'] = user.email
