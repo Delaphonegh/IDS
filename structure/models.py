@@ -37,6 +37,9 @@ class User(db.Model,UserMixin):
     pin_code = db.Column(db.String(6))
     balance = db.Column(db.Float, default=0.0)
 
+    call_logs = db.relationship('CallLog', backref='subscriber', lazy=True)  # Ensure this is correct
+
+
 
 
 
@@ -391,8 +394,7 @@ class CallLog(db.Model):
     destination = db.Column(db.String(15), nullable=False)
     duration = db.Column(db.Integer, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    subscriber_id = db.Column(db.Integer, db.ForeignKey('telafric_subscribers.id'))
-    subscriber = db.relationship('TelAfricSubscribers', backref='call_logs')
+    subscriber_id = db.Column(db.Integer, db.ForeignKey('users.id'))  # Ensure this matches the User table
 
 
 class Rate(db.Model):

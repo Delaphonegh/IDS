@@ -548,6 +548,7 @@ def log_call():
     
     print("log_call - Received Data:", data)
     
+    # Decode the phone number
     phone_number = unquote(data.get('phone_number'))
     destination = data.get('destination')
     duration = data.get('duration')
@@ -565,7 +566,7 @@ def log_call():
             phone_number=phone_number, 
             destination=destination, 
             duration=duration, 
-            subscriber=subscriber
+            subscriber=subscriber  # This should work if the relationship is set correctly
         )
         db.session.add(call_log)
         db.session.commit()
