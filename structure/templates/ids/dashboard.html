@@ -53,8 +53,8 @@
                         <h3 class="text-xl font-semibold text-gray-800">Current Balance</h3>
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wallet text-blue-500"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-5a2 2 0 0 0 0 4h5a1 1 0 0 0 1-1v-2a2 2 0 0 0-1-1.44V8.5a1 1 0 0 0-1-1z"/><path d="M5 20v-6a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v6"/><path d="M3 7h1"/><path d="M21 7h1"/><path d="M21 11h-1"/><path d="M3 11h1"/></svg>
                     </div>
-                    <div class="text-3xl font-bold text-blue-600">$452.50</div>
-                    <div class="text-sm text-green-600 mt-2">+$24.75 used this month</div>
+                    <div class="text-3xl font-bold text-blue-600">${{user.balance}}</div>
+                    <div class="text-sm text-green-600 mt-2">+$24.75 used this month(dummy text)</div>
                     <button class="bg-blue-500 text-white py-4 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center space-x-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wallet"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-5a2 2 0 0 0 0 4h5a1 1 0 0 0 1-1v-2a2 2 0 0 0-1-1.44V8.5a1 1 0 0 0-1-1z"/><path d="M5 20v-6a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v6"/><path d="M3 7h1"/><path d="M21 7h1"/><path d="M21 11h-1"/><path d="M3 11h1"/></svg>
                         <span>Top Up</span>
@@ -104,7 +104,19 @@
                 </div>
                 <div class="divide-y">
                     <div class="py-3 flex justify-between items-center">
+                        {% for payment in payments %}
                         <div class="flex items-center space-x-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-credit-card text-green-500"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                            <div>
+                                <div class="font-medium">Paystack Top-Up</div>
+                                <div class="text-sm text-gray-500">Processed Successfully</div>
+                            </div>
+                        </div
+                    </div>
+                    <div class="text-green-600 font-semibold">${{payment.amount}}</div>
+                </div>
+                        {%endfor%}>
+                        <div class="flex items-center space-x-4"></div>
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-credit-card text-green-500"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
                             <div>
                                 <div class="font-medium">PayPal Top-Up</div>
