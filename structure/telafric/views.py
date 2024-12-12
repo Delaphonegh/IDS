@@ -577,7 +577,39 @@ def log_call():
     print("log_call - Subscriber not found")
     return jsonify({"error": "Subscriber not found"}), 404
 
-@telafric.route('/top_up', methods=['POST'])
+@telafric.route('/top_up', methods=['GET'])
 def top_up():
-    # Logic to handle top-up
-    return jsonify({"status": "success"}), 200
+    # PayPal sandbox URL
+    paypal_url = "https://sandbox.paypal.com/cgi-bin/webscr"
+    
+    # PayPal parameters
+    params = {
+        "cmd": "_xclick",
+        "business": "your-paypal-email@example.com",  # Replace with your PayPal sandbox email
+        "item_name": "Top Up",
+        "amount": "10.00",  # Amount to top up
+        "currency_code": "USD",
+        "return": url_for('telafric.paypal_callback', _external=True),  # Callback URL
+        "cancel_return": url_for('telafric.dashboard', _external=True),  # Cancel URL
+        "notify_url": url_for('telafric.paypal_callback', _external=True)  # IPN URL
+    }
+    
+    # Redirect to PayPal
+    return redirect(paypal_url + "?" + requests.compat.urlencode(params))
+
+@telafric.route('/paypal_callback', methods=['GET'])
+def paypal_callback():
+    # Here you would handle the payment confirmation
+    # For now, let's just simulate saving the payment
+    # You can access the payment details via request.args
+    payment_status = request.args.get('st')  # Get the payment status from PayPal
+    amount = request.args.get('amt')  # Get the amount from PayPal
+    payer_email = request.args.get('payer_email')  # Get payer's email
+
+    # Save the payment to the database (you'll need to implement this)
+    # payment = Payment(reference=..., amount=amount, subscriber_id=current_user.id)
+    # db.session.add(payment)
+    # db.session.commit()
+
+    # flash('Payment successful! Amount: ' + amount)
+    return redirect(url_for('telafric.dashboard'))
