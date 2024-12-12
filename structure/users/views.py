@@ -105,7 +105,7 @@ def login():
                 # So let's now check if that next exists, otherwise we'll go to
                 # the welcome page.
                 if next is None or not next.startswith('/'):
-                    next = url_for('chats')
+                    next = url_for('telafric.dashboard')
 
                 return redirect(next)
         else:

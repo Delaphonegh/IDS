@@ -536,11 +536,13 @@ def dashboard():
     if not current_user.is_authenticated:
         return redirect(url_for('auth.login'))
     
+    
+    
     # Fetch call logs and payments for the current user
     call_logs = CallLog.query.filter_by(subscriber_id=current_user.id).all()
     payments = Payment.query.filter_by(subscriber_id=current_user.id).all()
     
-    return render_template('ids/dashboard.html', call_logs=call_logs, payments=payments)
+    return render_template('ids/dashboard.html', call_logs=call_logs, payments=payments,user =current_user)
 
 @telafric.route('/api/log_call', methods=['POST'])
 def log_call():
