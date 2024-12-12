@@ -370,7 +370,7 @@ def send_sms():
         "amount": 5,
         "email": 'raymond@delaphonegh.com',  # Assuming subscriber has an email field
         "reference": reference,
-        "callback_url": f"https://emily-zawk.onrender.com/api/paystack_callback/{subscriber.id}/{reference}"
+        "callback_url": f"https://ids-slw6.onrender.com/api/paystack_callback/{subscriber.id}/{reference}"
     }
 
     print("Payload:", payload)
@@ -615,3 +615,8 @@ def paypal_callback():
 
     # flash('Payment successful! Amount: ' + amount)
     return redirect(url_for('telafric.dashboard'))
+
+@telafric.route('/rates', methods=['GET'])
+def view_rates():
+    rates = Rate.query.all()  # Fetch all rates from the database
+    return render_template('ids/rates.html', rates=rates)
