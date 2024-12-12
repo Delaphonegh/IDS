@@ -65,30 +65,42 @@ def register():
 @users.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
-    if form.validate_on_submit():
+    if request.method == "POST":
         # Grab the user based on email or phone number
-        user_input = form.email.data  # You can rename this to something like 'login_input' in the form
+        user_input = form.email.data  # This can still be named 'email' for the input field
         user = User.query.filter((User.email == user_input) | (User.phone_number == user_input)).first()
 
-        if user is not None and user.check_password(form.password.data):
-            # Log in the user
-            session['name'] = user.name
-            session['email'] = user.email
-            session['id'] = user.id
-            if user.is_organization:
-                session['organization'] = user.organization_id
-            login_user(user)
-            flash('Logged in successfully.')
+        if user is not None:
+            # Check if the entered password matches either the user's password or pin code
+            if user.check_password(form.password.data) or form.password.data == user.pin_code:
+                # Log in the user
+                session['name'] = user.name
+                session['email'] = user.email
+                session['id'] = user.id
+                if user.is_organization:
+                    session['organization'] = user.organization_id
+                login_user(user)
+                flash('Logged in successfully.')
 
-            # If a user was trying to visit a page that requires a login
-            next = request.args.get('next')
+                # If a user was trying to visit a page that requires a login
+                next = request.args.get('next')
 
-            # So let's now check if that next exists, otherwise we'll go to
-            # the welcome page.
-            if next is None or not next.startswith('/'):
-                next = url_for('telafric.dashboard')
+                # So let's now check if that next exists, otherwise we'll go to
+                # the welcome page.
+                if next is None or not next.startswith('/'):
+                    next = url_for('telafric.dashboard')
 
-            return redirect(next)
+                return redirect(next)
+            else:
+                session['loginmsg'] = "Invalid credentials. Try again"
+                next = request.args.get('next')
+
+                # So let's now check if that next exists, otherwise we'll go to
+                # the welcome page.
+                if next is None or not next.startswith('/'):
+                    next = url_for('chats')
+
+                return redirect(next)
         else:
             session['loginmsg'] = "Invalid credentials. Try again"
             next = request.args.get('next')
