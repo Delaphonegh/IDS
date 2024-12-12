@@ -548,7 +548,7 @@ def log_call():
     
     print("log_call - Received Data:", data)
     
-    phone_number = data.get('phone_number')
+    phone_number = unquote(data.get('phone_number'))
     destination = data.get('destination')
     duration = data.get('duration')
     
