@@ -81,12 +81,43 @@ def get_balance():
     return jsonify({"error": "Subscriber not found"}), 404  # Return an error if subscriber does not exist
 
 
+# @telafric.route('/api/bill_call', methods=['POST','GET'])
+# def deduct_balance():
+#     print("request.args", request.args)
+#     print("request.get_json()", request.get_json())
+#     data = request.get_json()
+#     phone_number = request.args.get('phone_number')
+#     duration = request.args.get('duration')
+
+#     print("phone_number", phone_number)
+#     print("duration", duration)
+
+#     if not phone_number or not duration:
+#         return jsonify({"error": "Missing phone number or duration"}), 400
+
+#     subscriber = User.query.filter_by(phone_number=phone_number).first()
+#     print("subscriber", subscriber)
+    
+#     if subscriber:
+#         # Assuming the balance is a field in the User model
+#         cost = float(duration) * 0.20
+#         print("cost", cost)
+#         if subscriber.balance >= cost:
+#             print("previous balance", subscriber.balance)
+#             subscriber.balance -= cost
+#             db.session.commit()
+#             print("new balance", subscriber.balance)
+#             return jsonify({"balance": subscriber.balance}), 200  # Return the updated balance with a 200 status code
+#         else:
+#             return jsonify({"error": "Insufficient balance"}), 402  # Return an error if the subscriber does not have enough balance
+#     return jsonify({"error": "Subscriber not found"}), 404  # Return an error if subscriber does not exist
+
 @telafric.route('/api/bill_call', methods=['POST','GET'])
 def deduct_balance():
     print("request.args", request.args)
     print("request.get_json()", request.get_json())
     data = request.get_json()
-    phone_number = request.args.get('phone_number')
+    phone_number = unquote(request.args.get('phone_number', ''))
     duration = request.args.get('duration')
 
     print("phone_number", phone_number)
@@ -111,7 +142,6 @@ def deduct_balance():
         else:
             return jsonify({"error": "Insufficient balance"}), 402  # Return an error if the subscriber does not have enough balance
     return jsonify({"error": "Subscriber not found"}), 404  # Return an error if subscriber does not exist
-
 
 @telafric.route('/api/check_balance', methods=['GET'])
 def check_balance():
