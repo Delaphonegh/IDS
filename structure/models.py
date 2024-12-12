@@ -43,20 +43,22 @@ class User(db.Model,UserMixin):
     # roles = db.relationship('Roles', secondary='user_roles')
 
 
-    def __init__(self,email,username,password,name,last_name,number,organization_id,is_organization,role,phone_number,pin_code,balance):
+    def __init__(self, phone_number=None, pin_code=None, email=None, username=None, 
+                 password=None, name=None, last_name=None, number=None, 
+                 organization_id=None, is_organization=False, role=None, balance=0.0):
+        self.phone_number = phone_number
+        self.pin_code = pin_code
         self.email = email
         self.username = username
         self.name = name
-        self.password_hash = generate_password_hash(password)
-        self.role = role
         self.last_name = last_name
         self.number = number
-        self.phone_number = phone_number
-        self.pin_code = pin_code
+        self.organization_id = organization_id
+        self.is_organization = is_organization
+        self.role = role
         self.balance = balance
-        organization_id = organization_id
-        is_organization = is_organization
-   
+        if password:
+            self.password_hash = generate_password_hash(password)
 
     def check_password(self,password):
         return check_password_hash(self.password_hash,password)
