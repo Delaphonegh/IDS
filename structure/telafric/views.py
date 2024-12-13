@@ -131,7 +131,7 @@ def deduct_balance():
     
     if subscriber:
         # Find applicable rate by checking prefixes manually
-        destination = data.get('destination')  # Assuming destination is passed in the request
+        destination = request.args.get('destination')  
         matching_rates = Rate.query.filter(Rate.destination_prefix == destination).all()
 
         if not matching_rates:
