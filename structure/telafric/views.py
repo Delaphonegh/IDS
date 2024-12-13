@@ -112,7 +112,7 @@ def get_balance():
 #             return jsonify({"error": "Insufficient balance"}), 402  # Return an error if the subscriber does not have enough balance
 #     return jsonify({"error": "Subscriber not found"}), 404  # Return an error if subscriber does not exist
 
-@telafric.route('/api/bill_call', methods=['POST','GET'])
+@telafric.route('/api/bill_call', methods=['POST', 'GET'])
 def deduct_balance():
     print("request.args", request.args)
     print("request.get_json()", request.get_json())
@@ -130,8 +130,17 @@ def deduct_balance():
     print("subscriber", subscriber)
     
     if subscriber:
-        # Assuming the balance is a field in the User model
-        cost = float(duration) * 0.20
+        # Find applicable rate by checking prefixes manually
+        destination = data.get('destination')  # Assuming destination is passed in the request
+        matching_rates = Rate.query.filter(Rate.destination_prefix == destination).all()
+
+        if not matching_rates:
+            return jsonify({"error": "No applicable rate found for this destination"}), 404
+
+        # Get the rate per minute for the longest matching prefix
+        rate = max(matching_rates, key=lambda x: len(x.destination_prefix))
+        cost = float(duration) * rate.rate_per_minute  # Calculate cost based on the rate
+
         print("cost", cost)
         if subscriber.balance >= cost:
             print("previous balance", subscriber.balance)
