@@ -164,7 +164,7 @@ def deduct_balance():
         print(f"bill call - Selected Rate: {rate}")
         
         rate = rate.rate_per_minute
-        cost = float(duration) * rate.rate_per_minute
+        cost = float(duration) * rate
 
         print("cost", cost)
         print("rate", rate)
