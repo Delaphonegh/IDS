@@ -130,11 +130,14 @@ def deduct_balance():
     print("User", subscriber.phone_number)
     
     if subscriber:
+        print("Subscriber found")
         # Find applicable rate by checking prefixes manually
         destination = request.args.get('destination')  
         matching_rates = Rate.query.filter(Rate.destination_prefix == destination).all()
+        print("matching rates",matching_rates)
 
         if not matching_rates:
+            print("No applicable rate found for this destination")
             return jsonify({"error": "No applicable rate found for this destination"}), 404
 
         # Get the rate per minute for the longest matching prefix
