@@ -133,16 +133,38 @@ def deduct_balance():
         print("Subscriber found")
         # Find applicable rate by checking prefixes manually
         destination = request.args.get('destination')  
-        matching_rates = Rate.query.filter(Rate.destination_prefix == destination).all()
-        print("matching rates",matching_rates)
+        # matching_rates = Rate.query.filter(Rate.destination_prefix == destination).all()
+        # print("matching rates",matching_rates)
 
+        # if not matching_rates:
+        #     print("No applicable rate found for this destination")
+        #     return jsonify({"error": "No applicable rate found for this destination"}), 404
+
+        # # Get the rate per minute for the longest matching prefix
+        # # rate = max(matching_rates, key=lambda x: len(x.destination_prefix))
+        # rate = max(matching_rates, key=lambda x: len(x.destination_prefix))
+
+        # cost = float(duration) * rate.rate_per_minute  # Calculate cost based on the rate
+        matching_rates = []
+        all_rates = Rate.query.all()
+        print(f"bill call - Total Rates: {len(all_rates)}")
+        
+        for rate in all_rates:
+            print(f"bill call - Checking Rate: {rate.destination_prefix}")
+            if destination.startswith(rate.destination_prefix):
+                matching_rates.append(rate)
+                print(f"bill call - Matched Rate: {rate}")
+        
         if not matching_rates:
-            print("No applicable rate found for this destination")
-            return jsonify({"error": "No applicable rate found for this destination"}), 404
+            print("bill call - No matching rates found")
+            return jsonify({"error": "No rate found for this destination"}), 404
 
-        # Get the rate per minute for the longest matching prefix
+        # Get the longest matching prefix (most specific)
         rate = max(matching_rates, key=lambda x: len(x.destination_prefix))
-        cost = float(duration) * rate.rate_per_minute  # Calculate cost based on the rate
+        print(f"bill call - Selected Rate: {rate}")
+        
+        rate = rate.rate_per_minute
+        cost = float(duration) * rate.rate_per_minute
 
         print("cost", cost)
         print("rate", rate)
