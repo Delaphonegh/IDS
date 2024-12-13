@@ -111,12 +111,12 @@ def get_balance():
 #         else:
 #             return jsonify({"error": "Insufficient balance"}), 402  # Return an error if the subscriber does not have enough balance
 #     return jsonify({"error": "Subscriber not found"}), 404  # Return an error if subscriber does not exist
-
+#i need to later add a check to make sure a destination is passed. Might not need to do that if i handle this in dialplan
 @telafric.route('/api/bill_call', methods=['POST', 'GET'])
 def deduct_balance():
     print("request.args", request.args)
     print("request.get_json()", request.get_json())
-    data = request.get_json()
+    # data = request.get_json()
     phone_number = unquote(request.args.get('phone_number', ''))
     duration = request.args.get('duration')
 
@@ -127,7 +127,7 @@ def deduct_balance():
         return jsonify({"error": "Missing phone number or duration"}), 400
 
     subscriber = User.query.filter_by(phone_number=phone_number).first()
-    print("subscriber", subscriber)
+    print("User", subscriber.phone_number)
     
     if subscriber:
         # Find applicable rate by checking prefixes manually
@@ -142,6 +142,7 @@ def deduct_balance():
         cost = float(duration) * rate.rate_per_minute  # Calculate cost based on the rate
 
         print("cost", cost)
+        print("rate", rate)
         if subscriber.balance >= cost:
             print("previous balance", subscriber.balance)
             subscriber.balance -= cost
@@ -149,6 +150,7 @@ def deduct_balance():
             print("new balance", subscriber.balance)
             return jsonify({"balance": subscriber.balance}), 200  # Return the updated balance with a 200 status code
         else:
+            print("Insufficient balance")
             return jsonify({"error": "Insufficient balance"}), 402  # Return an error if the subscriber does not have enough balance
     return jsonify({"error": "Subscriber not found"}), 404  # Return an error if subscriber does not exist
 
