@@ -6,10 +6,11 @@ from flask_sqlalchemy import SQLAlchemy
 from structure import db,mail ,photos,app
 from flask_login import current_user
 import requests
-import uuid
+import uuid 
 from urllib.parse import unquote
 import os
 from datetime import datetime
+
 telafric = Blueprint('telafric', __name__)
 
 # ... existing code ...
@@ -361,14 +362,14 @@ def list_rates():
     } for rate in rates]), 200
 
 @telafric.route('/api/rates', methods=['POST'])
-def create_rate():
+def add_rate():
     if not current_user.is_authenticated:
         return jsonify({"error": "Unauthorized"}), 401
 
     data = request.get_json()
     
-    if not all(k in data for k in ["destination_prefix", "rate_per_minute"]):
-        return jsonify({"error": "Missing required fields"}), 400
+    # if not all(k in data for k in ["destination_prefix", "rate_per_minute"]):
+    #     return jsonify({"error": "Missing required fields"}), 400
 
     new_rate = Rate(
         destination_prefix=data["destination_prefix"],
@@ -386,8 +387,8 @@ def create_rate():
         "rate_per_minute": new_rate.rate_per_minute
     }), 201
 
-@telafric.route('/api/rates/<int:rate_id>', methods=['PUT'])
-def update_rate(rate_id):
+@telafric.route('/api/rates/<int:rate_id>', methods=['PUT','GET', 'POST'])
+def edit_rate(rate_id):
     if not current_user.is_authenticated:
         return jsonify({"error": "Unauthorized"}), 401
 
@@ -410,7 +411,7 @@ def update_rate(rate_id):
         "rate_per_minute": rate.rate_per_minute
     }), 200
 
-@telafric.route('/api/rates/<int:rate_id>', methods=['DELETE'])
+@telafric.route('/api/rates/<int:rate_id>', methods=['DELETE','POST'])
 def delete_rate(rate_id):
     if not current_user.is_authenticated:
         return jsonify({"error": "Unauthorized"}), 401
@@ -420,6 +421,12 @@ def delete_rate(rate_id):
     db.session.commit()
     
     return jsonify({"message": "Rate deleted successfully"}), 200
+
+
+@telafric.route('/admin/rates', methods=['GET'])
+def admin_rates():
+    rates = Rate.query.all()  # Fetch all rates from the database
+    return render_template('ids/admin/rates.html', rates=rates)
 
 # Update the check_credit route to use dynamic rates
 @telafric.route('/api/check_credit', methods=['GET'])
@@ -506,6 +513,7 @@ def send_sms():
     # Generate a unique reference for this transaction
     reference = str(uuid.uuid4())
     print("Generated reference:", reference)
+    base_url = os.environ.get("BASE_URL")
 
     # Create Paystack payment link
     paystack_secret_key = os.environ.get('PAYSTACK_KEY')
@@ -518,7 +526,7 @@ def send_sms():
         "amount": 5,
         "email": 'raymond@delaphonegh.com',  # Assuming subscriber has an email field
         "reference": reference,
-        "callback_url": f"https://ids-slw6.onrender.com/api/paystack_callback/{subscriber.id}/{reference}"
+        "callback_url": f"{base_url}/api/paystack_callback/{subscriber.id}/{reference}"
     }
 
     print("Payload:", payload)
@@ -557,6 +565,62 @@ def send_sms():
     print("SMS sent successfully")
     return jsonify({"status": "success", "payment_link": payment_link}), 200
 
+
+
+
+
+@telafric.route('/api/paystack_topup', methods=['POST'])
+def paystack_topup():
+    print("Paystack top-up initiated")  # Debugging print
+
+    if not current_user.is_authenticated:
+        print("User is not authenticated")  # Debugging print
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json()
+    print(f"Received data: {data}")  # Debugging print
+
+    amount = data.get('amount')  # Amount should be in kobo (1 unit = 0.01 currency)
+    if not amount:
+        print("Missing amount")  # Debugging print
+        return jsonify({"error": "Missing amount"}), 400
+
+    base_url = os.environ.get("BASE_URL")
+    # Generate a unique reference for this transaction
+    reference = str(uuid.uuid4())
+    print(f"Generated reference: {reference}")  # Debugging print
+
+    # Create Paystack payment link
+    paystack_secret_key = os.environ.get('PAYSTACK_KEY')
+    paystack_url = "https://api.paystack.co/transaction/initialize"
+    headers = {
+        "Authorization": f"Bearer {paystack_secret_key}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "amount": int(amount * 100),  # Convert to kobo
+        "amount": 5,  # Convert to kobo
+        "email": current_user.email,  # Assuming the user has an email field
+        "reference": reference,
+        "callback_url": f"{base_url}/api/paystack_callback/{current_user.id}/{reference}"  # Adjust the callback URL
+    }
+
+    print(f"Payload for Paystack API: {payload}")  # Debugging print
+
+    paystack_response = requests.post(paystack_url, json=payload, headers=headers)
+    print(f"Paystack response status code: {paystack_response.status_code}")  # Debugging print
+
+    if paystack_response.status_code != 200:
+        print("Failed to create payment link")  # Debugging print
+        return jsonify({"error": "Failed to create payment link"}), 500
+
+    payment_link = paystack_response.json()['data']['authorization_url']
+    print(f"Payment link generated: {payment_link}")  # Debugging print
+
+    return jsonify({"payment_link": payment_link}), 200
+
+
+
 @telafric.route('/api/paystack_callback/<int:subscriber_id>/<string:reference>', methods=['GET', 'POST'])
 def paystack_callback(subscriber_id, reference):
     print("paystack_callback triggered")
@@ -585,7 +649,8 @@ def paystack_callback(subscriber_id, reference):
                 payment = Payment(
                     reference=reference,
                     amount=amount_in_main_currency,
-                    subscriber_id=subscriber_id
+                    subscriber_id=subscriber_id,
+                    aggregator = "Paystack"
                 )
                 db.session.add(payment)
                 db.session.commit()
@@ -690,7 +755,7 @@ def dashboard():
     call_logs = CallLog.query.filter_by(subscriber_id=current_user.id).all()
     payments = Payment.query.filter_by(subscriber_id=current_user.id).all()
     
-    return render_template('ids/dashboard.html', call_logs=call_logs, payments=payments,user =current_user)
+    return render_template('ids/portal/dashboard.html', call_logs=call_logs, payments=payments,user =current_user)
 
 
 
@@ -734,4 +799,22 @@ def paypal_callback():
 @telafric.route('/rates', methods=['GET'])
 def view_rates():
     rates = Rate.query.all()  # Fetch all rates from the database
-    return render_template('ids/rates.html', rates=rates)
+    return render_template('ids/portal/rates.html', rates=rates)
+
+
+
+@telafric.route('/call_logs', methods=['GET'])
+def view_call_logs():
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))  # Redirect to login if not authenticated
+
+    call_logs = CallLog.query.filter_by(subscriber_id=current_user.id).all()  # Fetch call logs for the current user
+    return render_template('ids/portal/call_logs.html', call_logs=call_logs)
+
+@telafric.route('/payments', methods=['GET'])
+def view_payments():
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))  # Redirect to login if not authenticated
+
+    payments = Payment.query.filter_by(subscriber_id=current_user.id).all()  # Fetch payments for the current user
+    return render_template('ids/portal/payments.html', payments=payments)

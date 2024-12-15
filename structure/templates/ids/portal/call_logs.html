@@ -1,0 +1,22 @@
+{% extends "ids/base.html" %}
+{% block content %}
+<main class="flex-1 p-10">
+    <h1 class="text-3xl font-bold mb-4">Call Logs</h1>
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-semibold text-gray-800">Recent Call Logs</h3>
+        </div>
+        <div class="divide-y">
+            {% for log in call_logs %}
+            <div class="py-3 flex justify-between items-center">
+                <div>
+                    <div class="font-medium">{{ log.phone_number }}</div>
+                    <div class="text-sm text-gray-500">{{ log.timestamp.strftime('%B %d, %Y, %I:%M %p') }}</strong>| {{ log.duration }} secs</div>
+                </div>
+                <div class="text-green-600 font-semibold">${{ log.amount }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</main>
+{% endblock %}

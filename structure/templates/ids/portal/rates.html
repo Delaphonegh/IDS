@@ -1,0 +1,48 @@
+
+
+{% extends "ids/base.html" %}
+{% block content %} 
+
+
+            <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+                <h1 class="h2">Rates</h1>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title">Available Rates</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th scope="col">ID</th>
+                                    <th scope="col">Destination Prefix</th>
+                                    <th scope="col">Description</th>
+                                    <th scope="col">Rate per Minute</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for rate in rates %}
+                                <tr>
+                                    <th scope="row">{{ rate.id }}</th>
+                                    <td>{{ rate.destination_prefix }}</td>
+                                    <td>{{ rate.description }}</td>
+                                    <td>{{ rate.rate_per_minute }}</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No rates available.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='auth/layouts/js/bootstrap.bundle.min.js') }}"></script>
+</body>
+
+{%endblock%}

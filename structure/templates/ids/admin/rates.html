@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Rates - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='auth/layouts/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='auth/layouts/css/style.css') }}">
+</head>
+<body class="bg-gray-50 text-gray-900">
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white shadow-md p-6 border-r">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Admin Dashboard</h2>
+                <nav>
+                    <ul class="space-y-2">
+                        <li>
+                            <a href="#" class="flex items-center space-x-3 text-gray-700 p-2 rounded-md hover:bg-gray-100 transition-colors">
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('telafric.admin_rates') }}" class="flex items-center space-x-3 text-gray-700 p-2 rounded-md hover:bg-gray-100 transition-colors">
+                                <span>Manage Rates</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </aside>
+
+        <main role="main" class="flex-1 p-6">
+            <h1 class="text-3xl font-bold mb-4">Manage Rates</h1>
+
+            <!-- Button to Open Add Rate Modal -->
+            <button id="openAddRateModal" class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors mb-4">Add Rate</button>
+
+            <!-- Display Existing Rates -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title">Existing Rates</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-striped" id="ratesTable">
+                        <thead>
+                            <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">Destination Prefix</th>
+                                <th scope="col">Description</th>
+                                <th scope="col">Rate per Minute</th>
+                                <th scope="col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Rates will be populated here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Rate Modal -->
+    <div id="addRateModal" class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 hidden">
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-lg font-bold mb-4">Add Rate</h2>
+            <form id="addRateForm">
+                <div class="mb-4">
+                    <label for="add_destination_prefix" class="block text-sm font-medium text-gray-700">Destination Prefix</label>
+                    <input type="text" name="destination_prefix" id="add_destination_prefix" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+                </div>
+                <div class="mb-4">
+                    <label for="add_description" class="block text-sm font-medium text-gray-700">Description</label>
+                    <input type="text" name="description" id="add_description" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+                </div>
+                <div class="mb-4">
+                    <label for="add_rate_per_minute" class="block text-sm font-medium text-gray-700">Rate per Minute</label>
+                    <input type="number" name="rate_per_minute" id="add_rate_per_minute" required step="0.01" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+                </div>
+                <div class="flex justify-end">
+                    <button type="button" id="closeAddRateModal" class="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400">Cancel</button>
+                    <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors ml-2">Add Rate</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Rate Modal -->
+    <div id="editRateModal" class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 hidden">
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-lg font-bold mb-4">Edit Rate</h2>
+            <form id="editRateForm">
+                <input type="hidden" id="edit_rate_id" value="">
+                <div class="mb-4">
+                    <label for="edit_destination_prefix" class="block text-sm font-medium text-gray-700">Destination Prefix</label>
+                    <input type="text" name="destination_prefix" id="edit_destination_prefix" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+                </div>
+                <div class="mb-4">
+                    <label for="edit_description" class="block text-sm font-medium text-gray-700">Description</label>
+                    <input type="text" name="description" id="edit_description" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+                </div>
+                <div class="mb-4">
+                    <label for="edit_rate_per_minute" class="block text-sm font-medium text-gray-700">Rate per Minute</label>
+                    <input type="number" name="rate_per_minute" id="edit_rate_per_minute" required step="0.01" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+                </div>
+                <div class="flex justify-end">
+                    <button type="button" id="closeEditRateModal" class="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400">Cancel</button>
+                    <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors ml-2">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmDeleteModal" class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 hidden">
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-lg font-bold mb-4">Confirm Deletion</h2>
+            <p>Are you sure you want to delete this rate?</p>
+            <div class="mt-4">
+                <button id="confirmDelete" class="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600">Delete</button>
+                <button id="cancelDelete" class="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='auth/layouts/js/bootstrap.bundle.min.js') }}"></script>
+    <script>
+        let rateToDelete = null;
+
+        // Fetch and display rates
+        async function fetchRates() {
+            const response = await fetch('/api/rates', {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('token') // Assuming you have a token for authentication
+                }
+            });
+            const rates = await response.json();
+            const ratesTableBody = document.querySelector('#ratesTable tbody');
+            ratesTableBody.innerHTML = ''; // Clear existing rows
+
+            if (Array.isArray(rates)) {
+                rates.forEach(rate => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <th scope="row">${rate.id}</th>
+                        <td>${rate.destination_prefix}</td>
+                        <td>${rate.description}</td>
+                        <td>${rate.rate_per_minute}</td>
+                        <td>
+                            <button class="text-blue-500 hover:underline" onclick="openEditRateModal(${rate.id}, '${rate.destination_prefix}', '${rate.description}', ${rate.rate_per_minute})">Edit</button>
+                            <button class="text-red-500 hover:underline" onclick="confirmDelete(${rate.id})">Delete</button>
+                        </td>
+                    `;
+                    ratesTableBody.appendChild(row);
+                });
+            } else {
+                ratesTableBody.innerHTML = '<tr><td colspan="5" class="text-center">No rates available.</td></tr>';
+            }
+        }
+
+        // Open Add Rate Modal
+        document.getElementById('openAddRateModal').addEventListener('click', () => {
+            document.getElementById('addRateModal').classList.remove('hidden');
+        });
+
+        // Close Add Rate Modal
+        document.getElementById('closeAddRateModal').addEventListener('click', () => {
+            document.getElementById('addRateModal').classList.add('hidden');
+        });
+
+        // Add rate
+        document.getElementById('addRateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+
+            const response = await fetch('/api/rates', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('token') // Assuming you have a token for authentication
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                fetchRates(); // Refresh the rates table
+                e.target.reset(); // Reset the form
+                document.getElementById('addRateModal').classList.add('hidden'); // Hide the modal
+            } else {
+                alert('Failed to add rate');
+            }
+        });
+
+        // Open Edit Rate Modal
+        function openEditRateModal(id, destinationPrefix, description, ratePerMinute) {
+            document.getElementById('edit_rate_id').value = id;
+            document.getElementById('edit_destination_prefix').value = destinationPrefix;
+            document.getElementById('edit_description').value = description;
+            document.getElementById('edit_rate_per_minute').value = ratePerMinute;
+            document.getElementById('editRateModal').classList.remove('hidden');
+        }
+
+        // Close Edit Rate Modal
+        document.getElementById('closeEditRateModal').addEventListener('click', () => {
+            document.getElementById('editRateModal').classList.add('hidden');
+        });
+
+        // Edit rate
+        document.getElementById('editRateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const rateId = document.getElementById('edit_rate_id').value;
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+
+            const response = await fetch(`/api/rates/${rateId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('token') // Assuming you have a token for authentication
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                fetchRates(); // Refresh the rates table
+                e.target.reset(); // Reset the form
+                document.getElementById('editRateModal').classList.add('hidden'); // Hide the modal
+            } else {
+                alert('Failed to update rate');
+            }
+        });
+
+        // Confirm delete
+        function confirmDelete(rateId) {
+            rateToDelete = rateId;
+            document.getElementById('confirmDeleteModal').classList.remove('hidden');
+        }
+
+        // Delete rate
+        document.getElementById('confirmDelete').addEventListener('click', async () => {
+            const response = await fetch(`/api/rates/${rateToDelete}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('token') // Assuming you have a token for authentication
+                }
+            });
+
+            if (response.ok) {
+                fetchRates(); // Refresh the rates table
+                document.getElementById('confirmDeleteModal').classList.add('hidden'); // Hide the modal
+            } else {
+                alert('Failed to delete rate');
+            }
+        });
+
+        // Cancel delete
+        document.getElementById('cancelDelete').addEventListener('click', () => {
+            document.getElementById('confirmDeleteModal').classList.add('hidden'); // Hide the modal
+        });
+
+        // Fetch rates on page load
+        fetchRates();
+    </script>
+</body>
+</html>

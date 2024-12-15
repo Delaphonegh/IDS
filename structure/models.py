@@ -385,6 +385,7 @@ class Payment(db.Model):
     status = db.Column(db.String(10), default="pending")
     subscriber_id = db.Column(db.Integer, db.ForeignKey('telafric_subscribers.id'))
     subscriber = db.relationship('TelAfricSubscribers', backref='payments')
+    aggregator  = db.Column(db.String(64))
 
 
 class CallLog(db.Model):

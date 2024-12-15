@@ -1,0 +1,120 @@
+{% extends "ids/base.html" %}
+{% block content %}
+<main class="flex-1 p-10">
+    <h1 class="text-3xl font-bold mb-4">Payment History</h1>
+    
+    <!-- Top Up Buttons -->
+    <div class="mb-4">
+        <button id="openPayPalTopupModal" class="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors mr-2">Top Up with PayPal</button>
+        <button id="openPaystackTopupModal" class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors">Top Up with Paystack</button>
+    </div>
+
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-semibold text-gray-800">Recent Payments</h3>
+        </div>
+        <div class="divide-y">
+            {% for payment in payments %}
+            <div class="py-3 flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-credit-card text-green-500"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                    <div>
+                        <div class="font-medium">{{ payment.method }} Top-Up</div>
+                        <div class="text-sm text-gray-500">Processed Successfully</div>
+                    </div>
+                </div>
+                <div class="text-green-600 font-semibold">${{ payment.amount }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</main>
+
+<!-- PayPal Top Up Modal -->
+<div id="paypalTopupModal" class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 hidden">
+    <div class="bg-white p-6 rounded-lg shadow-lg">
+        <h2 class="text-lg font-bold mb-4">Top Up with PayPal</h2>
+        <form id="paypalTopupForm">
+            <div class="mb-4">
+                <label for="paypal_amount" class="block text-sm font-medium text-gray-700">Amount</label>
+                <input type="number" name="amount" id="paypal_amount" required step="0.01" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+            </div>
+            <div class="flex justify-end">
+                <button type="button" id="closePayPalTopupModal" class="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400">Cancel</button>
+                <button type="submit" class="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors ml-2">Top Up</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Paystack Top Up Modal -->
+<div id="paystackTopupModal" class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 hidden">
+    <div class="bg-white p-6 rounded-lg shadow-lg">
+        <h2 class="text-lg font-bold mb-4">Top Up with Paystack</h2>
+        <form id="paystackTopupForm">
+            <div class="mb-4">
+                <label for="paystack_amount" class="block text-sm font-medium text-gray-700">Amount</label>
+                <input type="number" name="amount" id="paystack_amount" required step="0.01" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+            </div>
+            <div class="flex justify-end">
+                <button type="button" id="closePaystackTopupModal" class="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400">Cancel</button>
+                <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors ml-2">Top Up</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Open PayPal Top Up Modal
+    document.getElementById('openPayPalTopupModal').addEventListener('click', () => {
+        document.getElementById('paypalTopupModal').classList.remove('hidden');
+    });
+
+    // Close PayPal Top Up Modal
+    document.getElementById('closePayPalTopupModal').addEventListener('click', () => {
+        document.getElementById('paypalTopupModal').classList.add('hidden');
+    });
+
+    // PayPal Top Up Form Submission
+    document.getElementById('paypalTopupForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const amount = document.getElementById('paypal_amount').value;
+
+        // Redirect to PayPal with the specified amount
+        const paypalUrl = `https://sandbox.paypal.com/cgi-bin/webscr?cmd=_xclick&business=your-paypal-email@example.com&item_name=Top Up&amount=${amount}&currency_code=USD&return=https://your_callback_url.com/api/paypal_callback&cancel_return=https://your_callback_url.com/api/payments`;
+        window.location.href = paypalUrl;
+    });
+
+    // Open Paystack Top Up Modal
+    document.getElementById('openPaystackTopupModal').addEventListener('click', () => {
+        document.getElementById('paystackTopupModal').classList.remove('hidden');
+    });
+
+    // Close Paystack Top Up Modal
+    document.getElementById('closePaystackTopupModal').addEventListener('click', () => {
+        document.getElementById('paystackTopupModal').classList.add('hidden');
+    });
+
+    // Paystack Top Up Form Submission
+    document.getElementById('paystackTopupForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const amount = document.getElementById('paystack_amount').value;
+
+        const response = await fetch('/api/paystack_topup', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('token') // Assuming you have a token for authentication
+            },
+            body: JSON.stringify({ amount: amount })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            window.location.href = data.payment_link; // Redirect to the payment link
+        } else {
+            alert('Failed to initiate Paystack top-up');
+        }
+    });
+</script>
+{% endblock %}
