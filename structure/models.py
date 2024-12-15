@@ -394,6 +394,7 @@ class CallLog(db.Model):
     destination = db.Column(db.String(15), nullable=False)
     duration = db.Column(db.Integer, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    amount = db.Column(db.Float)
     subscriber_id = db.Column(db.Integer, db.ForeignKey('users.id'))  # Ensure this matches the User table
 
 
