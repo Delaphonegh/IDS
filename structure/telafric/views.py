@@ -600,7 +600,7 @@ def paystack_topup():
     payload = {
         "amount": int(amount * 100),  # Convert to kobo
         "amount": 5,  # Convert to kobo
-        "email": current_user.email,  # Assuming the user has an email field
+        "email": "raymond@delaphonegh.com",  # Assuming the user has an email field
         "reference": reference,
         "callback_url": f"{base_url}/api/paystack_callback/{current_user.id}/{reference}"  # Adjust the callback URL
     }
@@ -608,7 +608,7 @@ def paystack_topup():
     print(f"Payload for Paystack API: {payload}")  # Debugging print
 
     paystack_response = requests.post(paystack_url, json=payload, headers=headers)
-    print(f"Paystack response status code: {paystack_response.status_code}")  # Debugging print
+    print(f"Paystack response status code: {paystack_response.status_code,paystack_response.content}")  # Debugging print
 
     if paystack_response.status_code != 200:
         print("Failed to create payment link")  # Debugging print

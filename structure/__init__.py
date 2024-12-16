@@ -94,11 +94,9 @@ from structure.users.views import users
 from structure.web.views import web
 from structure.error_pages.handlers import error_pages
 from structure.telafric.views import telafric
-from structure.vtiger.views import vtiger
 
 
 app.register_blueprint(users)
 app.register_blueprint(web)
 app.register_blueprint(error_pages)
 app.register_blueprint(telafric)
-app.register_blueprint(vtiger)
