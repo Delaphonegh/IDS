@@ -1,4 +1,4 @@
-from flask import jsonify, request
+from flask import jsonify, request, flash
 from structure.models import TelAfricSubscribers, Payment, CallLog,User, Rate
 from flask import render_template, Blueprint, session, redirect, url_for, jsonify, current_app, request ,send_file
 import random
@@ -7,7 +7,7 @@ from structure import db,mail ,photos,app
 from flask_login import current_user
 import requests
 import uuid 
-from urllib.parse import unquote
+from urllib.parse import unquote, urlencode
 import os
 from datetime import datetime
 
@@ -423,10 +423,7 @@ def delete_rate(rate_id):
     return jsonify({"message": "Rate deleted successfully"}), 200
 
 
-@telafric.route('/admin/rates', methods=['GET'])
-def admin_rates():
-    rates = Rate.query.all()  # Fetch all rates from the database
-    return render_template('ids/admin/rates.html', rates=rates)
+
 
 # Update the check_credit route to use dynamic rates
 @telafric.route('/api/check_credit', methods=['GET'])
@@ -475,8 +472,12 @@ def check_credit():
 
     if rate_per_minute > 0:
         max_duration = int(balance / (rate_per_minute / 60))
+        minutes = max_duration // 60
+        seconds = max_duration % 60
     else:
         max_duration = 0
+        minutes = 0
+        seconds = 0
 
     print(f"check_credit - Max Duration: {max_duration}")
 
@@ -485,6 +486,8 @@ def check_credit():
         "rate": rate_per_minute,
         "max_duration": max_duration,
         "description": rate.description,
+        "minutes": minutes,
+        "seconds": seconds,
         "timestamp": datetime.utcnow().isoformat()
     }), 200
 
@@ -747,7 +750,7 @@ def send_sms2():
 @telafric.route('/dashboard', methods=['GET'])
 def dashboard():
     if not current_user.is_authenticated:
-        return redirect(url_for('auth.login'))
+        return redirect(url_for('users.login'))
     
     
     
@@ -759,42 +762,96 @@ def dashboard():
 
 
 
+
+
 @telafric.route('/top_up', methods=['GET'])
 def top_up():
-    # PayPal sandbox URL
-    paypal_url = "https://sandbox.paypal.com/cgi-bin/webscr"
+    # Get amount from query parameter, default to 10 if not provided
+    amount = request.args.get('amount', '10.00')
     
-    # PayPal parameters
+    # Generate a unique transaction ID
+    transaction_id = str(uuid.uuid4())
+    
+    # PayPal sandbox URL (use PDT endpoint)
+    paypal_url = "https://www.sandbox.paypal.com/cgi-bin/webscr"
+    
+    # PayPal parameters (updated)
     params = {
         "cmd": "_xclick",
-        "business": "your-paypal-email@example.com",  # Replace with your PayPal sandbox email
-        "item_name": "Top Up",
-        "amount": "10.00",  # Amount to top up
+        "business": "sb-3zjqn30858747@business.example.com",  # Your PayPal sandbox business email
+        "item_name": "Account Top Up",
+        "amount": amount,
         "currency_code": "USD",
-        "return": url_for('telafric.paypal_callback', _external=True),  # Callback URL
-        "cancel_return": url_for('telafric.dashboard', _external=True),  # Cancel URL
-        "notify_url": url_for('telafric.paypal_callback', _external=True)  # IPN URL
+        "return": url_for('telafric.paypal_success', transaction_id=transaction_id, _external=True),
+        "cancel_return": url_for('telafric.dashboard', _external=True),
+        "notify_url": url_for('telafric.paypal_ipn', _external=True),
+        "custom": transaction_id,  # Pass transaction ID for tracking
+        "no_shipping": "1",  # No shipping required
+        "no_note": "1"  # No notes allowed
     }
     
-    # Redirect to PayPal
-    return redirect(paypal_url + "?" + requests.compat.urlencode(params))
+    # Construct redirect URL
+    redirect_url = paypal_url + "?" + urlencode(params)
+    return redirect(redirect_url)
 
-@telafric.route('/paypal_callback', methods=['GET'])
-def paypal_callback():
-    # Here you would handle the payment confirmation
-    # For now, let's just simulate saving the payment
-    # You can access the payment details via request.args
-    payment_status = request.args.get('st')  # Get the payment status from PayPal
-    amount = request.args.get('amt')  # Get the amount from PayPal
-    payer_email = request.args.get('payer_email')  # Get payer's email
-
-    # Save the payment to the database (you'll need to implement this)
-    # payment = Payment(reference=..., amount=amount, subscriber_id=current_user.id)
-    # db.session.add(payment)
-    # db.session.commit()
-
-    # flash('Payment successful! Amount: ' + amount)
+@telafric.route('/paypal_success')
+def paypal_success():
+    transaction_id = request.args.get('transaction_id')
+    
+    # Find the payment in the database
+    payment = Payment.query.filter_by(reference=transaction_id).first()
+    
+    if payment:
+        payment.status = 'completed'
+        db.session.commit()
+        flash('Payment successful!')
+    else:
+        flash('Payment record not found.')
+    
     return redirect(url_for('telafric.dashboard'))
+
+@telafric.route('/paypal_ipn', methods=['POST'])
+def paypal_ipn():
+    # Verify IPN message with PayPal
+    data = request.form.copy()
+    data['cmd'] = '_notify-validate'
+    
+    # Verify with PayPal
+    response = requests.post("https://www.sandbox.paypal.com/cgi-bin/webscr", data=data)
+    
+    if response.text == "VERIFIED":
+        # Extract payment details
+        payment_status = request.form.get('payment_status')
+        transaction_id = request.form.get('custom')
+        amount = request.form.get('mc_gross')
+        payer_email = request.form.get('payer_email')
+        
+        # Find existing payment or create new one
+        payment = Payment.query.filter_by(reference=transaction_id).first()
+        
+        if not payment:
+            # Create new payment record if not exists
+            payment = Payment(
+                reference=transaction_id,
+                amount=float(amount),
+                paid_at=datetime.utcnow(),
+                status=payment_status.lower(),
+                subscriber_id=current_user.id,  # Ensure current_user is imported/available
+                aggregator='PayPal'
+            )
+            db.session.add(payment)
+        else:
+            # Update existing payment
+            payment.status = payment_status.lower()
+            payment.paid_at = datetime.utcnow()
+        
+        # Update user balance
+        if payment_status.lower() == 'completed':
+            current_user.balance += float(amount)
+        
+        db.session.commit()
+    
+    return "OK"
 
 @telafric.route('/rates', methods=['GET'])
 def view_rates():
@@ -818,3 +875,26 @@ def view_payments():
 
     payments = Payment.query.filter_by(subscriber_id=current_user.id).all()  # Fetch payments for the current user
     return render_template('ids/portal/payments.html', payments=payments)
+
+
+
+
+
+
+
+
+
+
+
+# Admin Stuff
+@telafric.route('/admin/dashboard', methods=['GET'])
+# @login_required
+def admin_dashboard():
+    user = User.query.filter_by(id = session['id']).first()
+    print("user")
+    return render_template('ids/admin/dashboard.html',user=user)  # Adjust the template path as necessary
+
+@telafric.route('/admin/rates', methods=['GET'])
+def admin_rates():
+    rates = Rate.query.all()  # Fetch all rates from the database
+    return render_template('ids/admin/rates.html', rates=rates)

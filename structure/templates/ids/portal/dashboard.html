@@ -121,24 +121,12 @@
 
         // PayPal Top Up Form Submission
         document.getElementById('paypalTopupForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const amount = document.getElementById('paypal_amount').value;
+    e.preventDefault();
+    const amount = document.getElementById('paypal_amount').value;
 
-            // Redirect to PayPal with the specified amount
-            const paypalUrl = `https://sandbox.paypal.com/cgi-bin/webscr?cmd=_xclick&business=your-paypal-email@example.com&item_name=Top Up&amount=${amount}&currency_code=USD&return=https://your_callback_url.com/api/paypal_callback&cancel_return=https://your_callback_url.com/api/dashboard`;
-            window.location.href = paypalUrl;
-        });
-
-        // Open Paystack Top Up Modal
-        document.getElementById('openPaystackTopupModal').addEventListener('click', () => {
-            document.getElementById('paystackTopupModal').classList.remove('hidden');
-        });
-
-        // Close Paystack Top Up Modal
-        document.getElementById('closePaystackTopupModal').addEventListener('click', () => {
-            document.getElementById('paystackTopupModal').classList.add('hidden');
-        });
-
+    // Redirect to server-side PayPal initialization with amount
+    window.location.href = `/top_up?amount=${amount}`;
+});
         // Paystack Top Up Form Submission
         // Paystack Top Up Form Submission
 document.getElementById('paystackTopupForm').addEventListener('submit', async (e) => {

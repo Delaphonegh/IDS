@@ -2,16 +2,15 @@
 from flask import render_template,url_for,flash,redirect,request,Blueprint,session
 from flask_login import login_user, current_user, logout_user, login_required
 from structure import db,photos,mail 
-from structure.models import User ,Organization
+from structure.models import User 
 from structure.users.forms import RegistrationForm,LoginForm,UpdateUserForm
 from structure.users.picture_handler import add_profile_pic
 import secrets
-import requests
 import os
 from requests.auth import HTTPBasicAuth
 from flask_mail import Mail, Message
 # from structure.core.views import generate_secure_password
-import random
+from werkzeug.security import generate_password_hash
 import string
 
 users = Blueprint('users',__name__)
@@ -26,34 +25,34 @@ def generate_secure_password(length=12):
 connex_username = os.environ.get('connex_username')
 connex_password = os.environ.get('connex_password')
 # register
-@users.route('/register',methods=['GET','POST'])
-def register():
-    form = RegistrationForm()
-    print("hghgj")
-    # if form.validate_on_submit():
-    if request.method == 'POST':
-        if form.plans.data != 1:
-            organization = Organization.query.filter_by(org_code=form.organization.data).first()
-            is_organization = True
-        else:
-            organization = None
-            is_organization = False
-        print("df")
-        user = User(email=form.email.data,
-                    name=form.name.data,
-                    username=form.username.data,
-                    password=form.password.data,
-                    last_name=form.last_name.data,role="user",
-                    number=form.number.data,organization_id=organization,is_organization=is_organization)
+# @users.route('/register',methods=['GET','POST'])
+# def register():
+#     form = RegistrationForm()
+#     print("hghgj")
+#     # if form.validate_on_submit():
+#     if request.method == 'POST':
+#         if form.plans.data != 1:
+#             organization = Organization.query.filter_by(org_code=form.organization.data).first()
+#             is_organization = True
+#         else:
+#             organization = None
+#             is_organization = False
+#         print("df")
+#         user = User(email=form.email.data,
+#                     name=form.name.data,
+#                     username=form.username.data,
+#                     password=form.password.data,
+#                     last_name=form.last_name.data,role="user",
+#                     number=form.number.data,organization_id=organization,is_organization=is_organization)
 
-        db.session.add(user)
-        db.session.commit()
-        flash('Thanks for registering!')
+#         db.session.add(user)
+#         db.session.commit()
+#         flash('Thanks for registering!')
         
-        return redirect(url_for('chats',id=user.id))
+#         return redirect(url_for('chats',id=user.id))
             
 
-    return render_template('user/signup.html',form=form)
+#     return render_template('user/signup.html',form=form)
 
 
 
@@ -89,6 +88,15 @@ def login():
                 login_user(user)
                 flash('Logged in successfully.')
 
+                if user.role == "admin":
+                    next = url_for('telafric.admin_rates')
+
+                    return redirect(next)
+
+
+
+
+
                 # If a user was trying to visit a page that requires a login
                 next = request.args.get('next')
 
@@ -115,7 +123,7 @@ def login():
             # So let's now check if that next exists, otherwise we'll go to
             # the welcome page.
             if next is None or not next.startswith('/'):
-                next = url_for('chats')
+                next = url_for('users.login')
 
             return redirect(next)
     return render_template('user/signin.html', form=form)
@@ -172,3 +180,23 @@ def account():
 
 
 
+
+
+@users.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+        pin = request.form['pin']
+        country = request.form['country']
+        number = request.form['number']
+
+        # Create a new user instance
+        new_user = User(email=email, password=password, pin_code=pin, number=number)
+        new_user.password_hash = generate_password_hash(password)  # Hash the password
+        db.session.add(new_user)
+        db.session.commit()
+        flash('Signup successful! Please log in.', 'success')
+        return redirect(url_for('users.login'))  # Redirect to login page after signup
+
+    return render_template('user/signup.html')
