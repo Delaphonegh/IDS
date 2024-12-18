@@ -472,14 +472,17 @@ def check_credit():
 
     if rate_per_minute > 0:
         max_duration = int(balance / (rate_per_minute / 60))
-        minutes = max_duration // 60
-        seconds = max_duration % 60
+        minutes, seconds = divmod(max_duration, 60)
+        # minutes = max_duration // 60
+        # seconds = max_duration % 60
     else:
         max_duration = 0
         minutes = 0
         seconds = 0
 
     print(f"check_credit - Max Duration: {max_duration}")
+    print(f"check_credit - Minutes: {minutes}")
+    print(f"check_credit - Seconds: {seconds}")
 
     return jsonify({
         "balance": balance,
