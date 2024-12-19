@@ -148,73 +148,6 @@ def log_call():
     print("log_call - Subscriber not found")
     return jsonify({"error": "Subscriber not found"}), 404
 
-# @telafric.route('/api/bill_call', methods=['POST', 'GET'])
-# def deduct_balance():
-#     print("request.args", request.args)
-#     print("request.get_json()", request.get_json())
-#     # data = request.get_json()
-#     phone_number = unquote(request.args.get('phone_number', ''))
-#     duration = request.args.get('duration')
-
-#     print("phone_number", phone_number)
-#     print("duration", duration)
-
-#     if not phone_number or not duration:
-#         return jsonify({"error": "Missing phone number or duration"}), 400
-
-#     subscriber = User.query.filter_by(phone_number=phone_number).first()
-#     print("User", subscriber.phone_number)
-    
-#     if subscriber:
-#         print("Subscriber found")
-#         # Find applicable rate by checking prefixes manually
-#         destination = request.args.get('destination')  
-#         # matching_rates = Rate.query.filter(Rate.destination_prefix == destination).all()
-#         # print("matching rates",matching_rates)
-
-#         # if not matching_rates:
-#         #     print("No applicable rate found for this destination")
-#         #     return jsonify({"error": "No applicable rate found for this destination"}), 404
-
-#         # # Get the rate per minute for the longest matching prefix
-#         # # rate = max(matching_rates, key=lambda x: len(x.destination_prefix))
-#         # rate = max(matching_rates, key=lambda x: len(x.destination_prefix))
-
-#         # cost = float(duration) * rate.rate_per_minute  # Calculate cost based on the rate
-#         matching_rates = []
-#         all_rates = Rate.query.all()
-#         print(f"bill call - Total Rates: {len(all_rates)}")
-        
-#         for rate in all_rates:
-#             print(f"bill call - Checking Rate: {rate.destination_prefix}")
-#             if destination.startswith(rate.destination_prefix):
-#                 matching_rates.append(rate)
-#                 print(f"bill call - Matched Rate: {rate}")
-        
-#         if not matching_rates:
-#             print("bill call - No matching rates found")
-#             return jsonify({"error": "No rate found for this destination"}), 404
-
-#         # Get the longest matching prefix (most specific)
-#         rate = max(matching_rates, key=lambda x: len(x.destination_prefix))
-#         print(f"bill call - Selected Rate: {rate}")
-        
-#         rate = rate.rate_per_minute
-#         cost = float(duration) * rate
-
-#         print("cost", cost)
-#         print("rate", rate)
-#         if subscriber.balance >= cost:
-#             print("previous balance", subscriber.balance)
-#             subscriber.balance -= cost
-#             db.session.commit()
-#             print("new balance", subscriber.balance)
-#             return jsonify({"balance": subscriber.balance,
-#                             "cost":cost}), 200  # Return the updated balance with a 200 status code
-#         else:
-#             print("Insufficient balance")
-#             return jsonify({"error": "Insufficient balance"}), 402  # Return an error if the subscriber does not have enough balance
-#     return jsonify({"error": "Subscriber not found"}), 404  # Return an error if subscriber does not exist
 
 
 @telafric.route('/api/bill_call', methods=['POST', 'GET'])
@@ -493,7 +426,24 @@ def check_credit():
         "seconds": seconds,
         "timestamp": datetime.utcnow().isoformat()
     }), 200
+ 
 
+# @telafric.route('/api/get_balance', methods=['GET'])
+# def get_balance():
+#     phone_number = unquote(request.args.get('phone_number', ''))
+#     print("getiing balance for:",phone_number)
+#     # destination = unquote(request.args.get('destination', ''))
+
+#     if not phone_number:
+#         print("No phone number provided")
+#         return jsonify({"error": "Missing phone number"}), 400  # Return an error if phone number is not provided
+
+#     subscriber = User.query.filter_by(phone_number=phone_number).first()
+    
+    if subscriber:
+        print("Balance is :",subscriber.balance)
+        return jsonify({"balance": subscriber.balance}), 200  # Return the balance with a 200 status code
+    return jsonify({"error": "Subscriber not found"}), 404  # Return an error if subscriber does not exist
 
 
 @telafric.route('/api/send_sms', methods=['POST'])
@@ -506,6 +456,7 @@ def send_sms():
     amount = data.get('amount') 
     phone_number = unquote(phone_number)
     print("number",phone_number)
+    print("number",amount)
     if not phone_number:
         print("Missing phone number or amount")
         return jsonify({"error": "Missing phone number or amount"}), 400
@@ -529,7 +480,7 @@ def send_sms():
         "Content-Type": "application/json"
     }
     payload = {
-        "amount": 5,
+        "amount": amount *100,
         "email": 'raymond@delaphonegh.com',  # Assuming subscriber has an email field
         "reference": reference,
         "callback_url": f"{base_url}/api/paystack_callback/{subscriber.id}/{reference}"
@@ -901,3 +852,4 @@ def admin_dashboard():
 def admin_rates():
     rates = Rate.query.all()  # Fetch all rates from the database
     return render_template('ids/admin/rates.html', rates=rates)
+
