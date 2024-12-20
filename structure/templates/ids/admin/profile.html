@@ -1,0 +1,45 @@
+{% extends "ids/admin/base.html" %}
+{% block content %}
+        <main role="main" class="flex-1 p-6">
+            <div class="min-h-screen p-6 bg-gray-50">
+        <div class="container max-w-screen-lg mx-auto">
+            <div class="bg-white rounded-lg shadow-xl p-4 sm:p-8">
+                <div class="flex items-center justify-between mb-8">
+                    <h2 class="text-2xl font-bold text-gray-900">Admin Profile Settings</h2>
+                    <div class="bg-indigo-100 rounded-full p-2">
+                        <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                    </div>
+                </div>
+
+                <form method="POST" class="mt-4">
+                    <div class="form-group">
+                        <label for="username">Username:</label>
+                        <input type="text" name="username" class="form-control" value="{{ userinfo.username }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email:</label>
+                        <input type="email" name="email" class="form-control" value="{{ userinfo.email }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="name">Name:</label>
+                        <input type="text" name="name" class="form-control" value="{{ userinfo.name }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="number">Phone Number:</label>
+                        <input type="text" name="number" class="form-control" value="{{ userinfo.phone_number }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="location">Location:</label>
+                        <input type="text" name="location" class="form-control" value="{{ userinfo.location }}" required>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">Update Profile</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+{%endblock%}

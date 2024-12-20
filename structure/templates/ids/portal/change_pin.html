@@ -1,0 +1,26 @@
+{% extends "ids/base.html" %}
+{% block content %}
+<body>
+    <div class="container">
+        <h1 class="mt-5">Change Your PIN</h1>
+        <form method="POST" class="mt-4">
+            <div class="form-group">
+                <label for="current_pin">Current PIN:</label>
+                <input type="password" name="current_pin" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="new_pin">New PIN:</label>
+                <input type="password" name="new_pin" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="confirm_new_pin">Confirm New PIN:</label>
+                <input type="password" name="confirm_new_pin" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Change PIN</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
+{%endblock%}

@@ -143,40 +143,72 @@ def logout():
 
 
 # account (update UserForm)
+# ... existing code ...
 @users.route("/account", methods=['GET', 'POST'])
 @login_required
 def account():
     userinfo = User.query.filter_by(email=session["email"]).first_or_404()
 
-    form = UpdateUserForm()
-
     if request.method == 'POST':
+        # Directly handle form data from request
+        username = request.form.get('username')
+        email = request.form.get('email')
+        name = request.form.get('name')
+        number = request.form.get('number')
+        # location = request.form.get('location')
 
-        if form.picture.data:
-            username = current_user.username
-            pic = add_profile_pic(form.picture.data,username)
-            current_user.profile_image = pic
 
-        current_user.username = form.username.data
-        current_user.email = form.email.data
-        current_user.name = form.name.data
-        current_user.number = form.number.data
-        current_user.location = form.location.data
-        current_user.pref_help = form.pref_help.data
-        current_user.pref_therapistgender = form.pref_gender.data
-        current_user.pref_medium = form.pref_medium.data
-        
+        # Update user information
+        userinfo.username = username
+        userinfo.email = email
+        userinfo.name = name
+        userinfo.phone_number = number
+        # userinfo.location = location
 
+
+        # Commit changes to the database
         db.session.commit()
         flash('User Account Updated')
-        return redirect(url_for('userportal.uprofile'))
+        return redirect(url_for('users.account'))
 
-    elif request.method == 'GET':
-        form.username.data = current_user.username
-        form.email.data = current_user.email
+    # Pre-fill the form fields with current user info for GET request
+    return render_template('ids/portal/profile.html', userinfo=userinfo)
 
-    profile_image = url_for('static', filename='profile_pics/' + current_user.profile_image)
-    return render_template('userportal/profile.html', profile_image=profile_image, form=form,userinfo=userinfo)
+# ... existing code ...
+
+
+@users.route("/admin_account", methods=['GET', 'POST'])
+@login_required
+def admin_account():
+    # Ensure the current user is an admin
+    if not current_user.role == "admin":
+        flash('Access denied. Admins only.', 'danger')
+        return redirect(url_for('users.login'))
+
+    userinfo = User.query.filter_by(email=session["email"]).first_or_404()
+
+    if request.method == 'POST':
+        # Directly handle form data from request
+        username = request.form.get('username')
+        email = request.form.get('email')
+        name = request.form.get('name')
+        number = request.form.get('number')
+        location = request.form.get('location')
+
+        # Update user information
+        userinfo.username = username
+        userinfo.email = email
+        userinfo.name = name
+        userinfo.number = number
+        userinfo.location = location
+
+        # Commit changes to the database
+        db.session.commit()
+        flash('Admin Account Updated')
+        return redirect(url_for('users.admin_account'))
+
+    # Pre-fill the form fields with current user info for GET request
+    return render_template('ids/admin/profile.html', userinfo=userinfo)
 
 
 
@@ -196,7 +228,43 @@ def register():
         new_user.password_hash = generate_password_hash(password)  # Hash the password
         db.session.add(new_user)
         db.session.commit()
+
+        # Send signup email notification
+        # msg = Message("Welcome to Our Service!",
+        #               recipients=[email])
+        # msg.body = f"Hello {new_user.username},\n\nThank you for signing up! Your account has been created successfully.\n\nBest regards,\nYour Company Name"
+        # mail.send(msg)
+
         flash('Signup successful! Please log in.', 'success')
         return redirect(url_for('users.login'))  # Redirect to login page after signup
 
     return render_template('user/signup.html')
+
+
+@users.route("/change_pin", methods=['GET', 'POST'])
+@login_required
+def change_pin():
+    if request.method == 'POST':
+        current_pin = request.form.get('current_pin')
+        new_pin = request.form.get('new_pin')
+        confirm_new_pin = request.form.get('confirm_new_pin')
+
+        userinfo = User.query.filter_by(email=session["email"]).first_or_404()
+
+        # Check if the current PIN is correct
+        if userinfo.pin_code != current_pin:
+            flash('Current PIN is incorrect.', 'danger')
+            return redirect(url_for('users.change_pin'))
+
+        # Check if the new PIN and confirm PIN match
+        if new_pin != confirm_new_pin:
+            flash('New PIN and confirmation do not match.', 'danger')
+            return redirect(url_for('users.change_pin'))
+
+        # Update the user's PIN
+        userinfo.pin_code = new_pin
+        db.session.commit()
+        flash('PIN changed successfully!', 'success')
+        return redirect(url_for('users.account'))  # Redirect to account page or any other page
+
+    return render_template('ids/portal/change_pin.html')

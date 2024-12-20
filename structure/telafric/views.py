@@ -10,6 +10,7 @@ import uuid
 from urllib.parse import unquote, urlencode
 import os
 from datetime import datetime
+from werkzeug.security import generate_password_hash
 
 telafric = Blueprint('telafric', __name__)
 
@@ -390,8 +391,11 @@ def check_credit():
             print(f"check_credit - Matched Rate: {rate}")
     
     if not matching_rates:
-        print("check_credit - No matching rates found")
-        return jsonify({"error": "No rate found for this destination"}), 404
+        return jsonify({
+            "status": "error",
+            "error_code": "DESTINATION_NOT_SUPPORTED",
+            "message": "No rate found for this destination"
+        }), 404
 
     # Get the longest matching prefix (most specific)
     rate = max(matching_rates, key=lambda x: len(x.destination_prefix))
@@ -546,7 +550,9 @@ def paystack_topup():
     # Generate a unique reference for this transaction
     reference = str(uuid.uuid4())
     print(f"Generated reference: {reference}")  # Debugging print
-
+    amount = float(data.get('amount', 0))  # Ensure amount is a float
+# Convert to kobo
+    amount_in_kobo = int(amount * 100) 
     # Create Paystack payment link
     paystack_secret_key = os.environ.get('PAYSTACK_KEY')
     paystack_url = "https://api.paystack.co/transaction/initialize"
@@ -555,8 +561,8 @@ def paystack_topup():
         "Content-Type": "application/json"
     }
     payload = {
-        "amount": int(amount * 100),  # Convert to kobo
-        "amount": 5,  # Convert to kobo
+        "amount": amount_in_kobo,  # Convert to kobo
+        # "amount": 5,  # Convert to kobo
         "email": "raymond@delaphonegh.com",  # Assuming the user has an email field
         "reference": reference,
         "callback_url": f"{base_url}/api/paystack_callback/{current_user.id}/{reference}"  # Adjust the callback URL
@@ -815,12 +821,27 @@ def view_rates():
 
 
 @telafric.route('/call_logs', methods=['GET'])
+# @login_required
 def view_call_logs():
     if not current_user.is_authenticated:
         return redirect(url_for('auth.login'))  # Redirect to login if not authenticated
 
-    call_logs = CallLog.query.filter_by(subscriber_id=current_user.id).all()  # Fetch call logs for the current user
-    return render_template('ids/portal/call_logs.html', call_logs=call_logs)
+    search_query = request.args.get('search', '')  # Get the search query from the request
+    call_logs = CallLog.query.filter_by(subscriber_id=current_user.id)
+
+    if search_query:
+        # Filter call logs based on the search query
+        call_logs = call_logs.filter(
+            (CallLog.phone_number.like(f'%{search_query}%')) |  # Search by phone number
+            (CallLog.destination.like(f'%{search_query}%')) |  # Search by destination
+            (CallLog.duration.like(f'%{search_query}%')) |  # Search by duration
+            (CallLog.timestamp.like(f'%{search_query}%'))  # Search by timestamp (if applicable)
+            # Add more fields to search as needed
+        )
+
+    call_logs = call_logs.all()  # Execute the query
+
+    return render_template('ids/portal/call_logs.html', call_logs=call_logs, search_query=search_query)
 
 @telafric.route('/payments', methods=['GET'])
 def view_payments():
@@ -828,7 +849,7 @@ def view_payments():
         return redirect(url_for('auth.login'))  # Redirect to login if not authenticated
 
     payments = Payment.query.filter_by(subscriber_id=current_user.id).all()  # Fetch payments for the current user
-    return render_template('ids/portal/payments.html', payments=payments)
+    return render_template('ids/portal/payments.html', payments=payments,user=current_user)
 
 
 
@@ -853,3 +874,133 @@ def admin_rates():
     rates = Rate.query.all()  # Fetch all rates from the database
     return render_template('ids/admin/rates.html', rates=rates)
 
+
+@telafric.route('/admin/admins', methods=['GET', 'POST'])
+def admins():
+    if not current_user.is_authenticated or current_user.role != 'admin':
+        return jsonify({"error": "Unauthorized"}), 401  # Ensure only admins can access this route
+    admins = User.query.filter_by(role="admin").all()
+    if request.method == 'POST':
+        data = request.form
+        email = data.get('email')
+        username = data.get('username')
+        password = data.get('password')
+        role = 'admin'  # Set the role to admin
+
+        # Create a new admin user
+        new_admin = User(email=email, username=username, password=password, role=role)
+        new_admin.password_hash = generate_password_hash(password)  # Hash the password
+        db.session.add(new_admin)
+        db.session.commit()
+
+        flash('Admin account created successfully!', 'success')
+        return redirect(url_for('telafric.admin_dashboard'))  # Redirect to the admin dashboard
+
+    return render_template('ids/admin/admins.html',admins=admins)  # Render the form template
+
+
+
+@telafric.route('/api/admins', methods=['GET'])
+def fetch_admins():
+    if not current_user.is_authenticated or current_user.role != 'admin':
+        return jsonify({"error": "Unauthorized"}), 401  # Ensure only admins can access this route
+
+    # Query to get all users with the role of admin
+    admins = User.query.filter_by(role='admin').all()
+    
+    # Prepare the response data
+    admin_list = [{
+        "id": admin.id,
+        "email": admin.email,
+        "username": admin.username
+    } for admin in admins]
+
+    return jsonify(admin_list), 200  # Return the list of admins as JSON
+
+
+@telafric.route('/api/admins', methods=['POST'])
+def add_admin():
+    print("adding a new admin")
+    if not current_user.is_authenticated or current_user.role != 'admin':
+        return jsonify({"error": "Unauthorized"}), 401  # Ensure only admins can access this route
+
+    data = request.get_json()  # Get the JSON data from the request
+    email = data.get('email')
+    username = data.get('username')
+    password = data.get('password')
+
+    # Validate input
+    if not email or not username or not password:
+        print("missing fields")
+        return jsonify({"error": "Missing required fields"}), 400
+
+    # Check if the email or username already exists
+    existing_admin = User.query.filter((User.email == email) | (User.username == username)).first()
+    if existing_admin:
+        return jsonify({"error": "Email or username already exists"}), 409  # Conflict
+
+    # Create a new admin user
+    new_admin = User(
+        email=email,
+        username=username,
+        password=password,
+        role="admin"  # Pass the plain password to the User constructor
+    )
+    new_admin.password_hash = generate_password_hash(password)  # Hash the password
+    db.session.add(new_admin)
+    db.session.commit()
+    print("admin added")
+
+    return jsonify({"message": "Admin account created successfully!"}), 201  # Return success message
+
+
+
+@telafric.route('/api/admins/<int:admin_id>', methods=['DELETE'])
+def delete_admin(admin_id):
+    if not current_user.is_authenticated or current_user.role != 'admin':
+        return jsonify({"error": "Unauthorized"}), 401  # Ensure only admins can access this route
+
+    admin_to_delete = User.query.get(admin_id)
+    if not admin_to_delete:
+        return jsonify({"error": "Admin not found"}), 404  # Return an error if the admin does not exist
+
+    db.session.delete(admin_to_delete)
+    db.session.commit()
+
+    return jsonify({"message": "Admin account deleted successfully!"}), 200  # Return success message
+
+
+@telafric.route('/api/admins/<int:admin_id>', methods=['PUT'])
+def edit_admin(admin_id):
+    if not current_user.is_authenticated or current_user.role != 'admin':
+        return jsonify({"error": "Unauthorized"}), 401  # Ensure only admins can access this route
+
+    data = request.get_json()  # Get the JSON data from the request
+    email = data.get('email')
+    username = data.get('username')
+    password = data.get('password')
+
+    # Validate input
+    if not email or not username:
+        return jsonify({"error": "Missing required fields"}), 400
+
+    admin_to_edit = User.query.get(admin_id)
+    if not admin_to_edit:
+        return jsonify({"error": "Admin not found"}), 404  # Return an error if the admin does not exist
+
+    # Check for duplicate email or username
+    existing_admin = User.query.filter(
+        (User.email == email) | (User.username == username)
+    ).first()
+    if existing_admin and existing_admin.id != admin_id:
+        return jsonify({"error": "Email or username already exists"}), 409  # Conflict
+
+    # Update admin details
+    admin_to_edit.email = email
+    admin_to_edit.username = username
+    if password:  # Only update password if provided
+        admin_to_edit.password_hash = generate_password_hash(password)
+
+    db.session.commit()
+
+    return jsonify({"message": "Admin account updated successfully!"}), 200  # Return success message

@@ -1,19 +1,54 @@
 {% extends "ids/base.html" %}
 {% block content %}
-<main class="flex-1 p-10">
-    <h1 class="text-3xl font-bold mb-4">Call Logs</h1>
-    <div class="bg-white shadow-md rounded-lg p-6">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-xl font-semibold text-gray-800">Recent Call Logs</h3>
+<main class="flex-1 p-8">
+    <!-- Header Section -->
+    <div class="mb-6">
+        <h1 class="text-2xl font-semibold mb-2">Call Logs</h1>
+        <p class="text-gray-500 text-sm">{{ call_logs|length }} records</p>
+    </div>
+
+    <!-- Navigation Tabs -->
+
+
+    <!-- Search Bar -->
+    <form method="GET" class="mb-4">
+        <div class="input-group">
+            <input type="text" name="search" class="form-control" placeholder="Search..." value="{{ search_query }}">
+            <div class="input-group-append">
+                <button class="btn btn-primary" type="submit">Search</button>
+            </div>
         </div>
+    </form>
+
+    <!-- Call Logs Table -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b">
+            <div class="grid grid-cols-4 gap-4">
+                <div class="text-sm font-medium text-gray-500">Phone Number</div>
+                <div class="text-sm font-medium text-gray-500">Timestamp</div>
+                <div class="text-sm font-medium text-gray-500">Duration</div>
+                <div class="text-sm font-medium text-gray-500 ">Cost</div>
+            </div>
+        </div>
+
         <div class="divide-y">
             {% for log in call_logs %}
-            <div class="py-3 flex justify-between items-center">
-                <div>
-                    <div class="font-medium">{{ log.phone_number }}</div>
-                    <div class="text-sm text-gray-500">{{ log.timestamp.strftime('%B %d, %Y, %I:%M %p') }}</strong>| {{ log.duration }} secs</div>
+            <div class="px-6 py-4 hover:bg-gray-50">
+                <div class="grid grid-cols-4 gap-4 items-center">
+                    <div class="flex items-center">
+                       
+                        <div class="font-medium text-gray-900">{{ log.phone_number }}</div>
+                    </div>
+                    <div class="text-sm text-gray-500">
+                        {{ log.timestamp.strftime('%B %d, %Y') }}
+                    </div>
+                    <div class="text-sm text-gray-500">
+                        {{ log.duration }} secs
+                    </div>
+                    <div class="text-sm font-medium text-green-600">
+                        ${{ log.amount }}
+                    </div>
                 </div>
-                <div class="text-green-600 font-semibold">${{ log.amount }}</div>
             </div>
             {% endfor %}
         </div>

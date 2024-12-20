@@ -1,0 +1,215 @@
+{% extends "ids/admin/base.html" %}
+{% block content %}
+        <main role="main" class="flex-1 p-6">
+            <h1 class="text-3xl font-bold mb-4">Manage Admins</h1>
+
+            <!-- Button to Open Add Admin Modal -->
+            <button id="openAddAdminModal" class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors mb-4">Add Admin</button>
+
+            <!-- Display Existing Admins -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title">Existing Admins</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-striped" id="adminsTable">
+                        <thead>
+                            <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">Email</th>
+                                <th scope="col">Username</th>
+                                <th scope="col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Admins will be populated here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Admin Modal -->
+    <div id="addAdminModal" class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 hidden">
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-lg font-bold mb-4">Add Admin</h2>
+            <form id="addAdminForm">
+                <div class="mb-4">
+                    <label for="add_email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" name="email" id="add_email" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+                </div>
+                <div class="mb-4">
+                    <label for="add_username" class="block text-sm font-medium text-gray-700">Username</label>
+                    <input type="text" name="username" id="add_username" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+                </div>
+                <div class="mb-4">
+                    <label for="add_password" class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" name="password" id="add_password" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+                </div>
+                <div class="flex justify-end">
+                    <button type="button" id="closeAddAdminModal" class="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400">Cancel</button>
+                    <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors ml-2">Add Admin</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Admin Modal -->
+    <div id="editAdminModal" class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 hidden">
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-lg font-bold mb-4">Edit Admin</h2>
+            <form id="editAdminForm">
+                <input type="hidden" id="edit_admin_id" value="">
+                <div class="mb-4">
+                    <label for="edit_email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" name="email" id="edit_email" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+                </div>
+                <div class="mb-4">
+                    <label for="edit_username" class="block text-sm font-medium text-gray-700">Username</label>
+                    <input type="text" name="username" id="edit_username" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+                </div>
+                <div class="mb-4">
+                    <label for="edit_password" class="block text-sm font-medium text-gray-700">Password (leave blank to keep current)</label>
+                    <input type="password" name="password" id="edit_password" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+                </div>
+                <div class="flex justify-end">
+                    <button type="button" id="closeEditAdminModal" class="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400">Cancel</button>
+                    <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors ml-2">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Fetch and display admins
+        async function fetchAdmins() {
+            const response = await fetch('/api/admins', {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('token') // Assuming you have a token for authentication
+                }
+            });
+            const admins = await response.json();
+            const adminsTableBody = document.querySelector('#adminsTable tbody');
+            adminsTableBody.innerHTML = ''; // Clear existing rows
+
+            if (Array.isArray(admins)) {
+                admins.forEach(admin => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <th scope="row">${admin.id}</th>
+                        <td>${admin.email}</td>
+                        <td>${admin.username}</td>
+                        <td>
+                            <button class="text-blue-500 hover:underline" onclick="openEditAdminModal(${admin.id}, '${admin.email}', '${admin.username}')">Edit</button>
+                            <button class="text-red-500 hover:underline" onclick="confirmDelete(${admin.id})">Delete</button>
+                        </td>
+                    `;
+                    adminsTableBody.appendChild(row);
+                });
+            } else {
+                adminsTableBody.innerHTML = '<tr><td colspan="4" class="text-center">No admins available.</td></tr>';
+            }
+        }
+
+        // Open Add Admin Modal
+        document.getElementById('openAddAdminModal').addEventListener('click', () => {
+            document.getElementById('addAdminModal').classList.remove('hidden');
+        });
+
+        // Close Add Admin Modal
+        document.getElementById('closeAddAdminModal').addEventListener('click', () => {
+            document.getElementById('addAdminModal').classList.add('hidden');
+        });
+
+        // Add admin
+        document.getElementById('addAdminForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+
+            const response = await fetch('/api/admins', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('token') // Assuming you have a token for authentication
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                fetchAdmins(); // Refresh the admins table
+                e.target.reset(); // Reset the form
+                document.getElementById('addAdminModal').classList.add('hidden'); // Hide the modal
+            } else {
+                alert('Failed to add admin');
+            }
+        });
+
+        // Open Edit Admin Modal
+        function openEditAdminModal(id, email, username) {
+            document.getElementById('edit_admin_id').value = id;
+            document.getElementById('edit_email').value = email;
+            document.getElementById('edit_username').value = username;
+            document.getElementById('editAdminModal').classList.remove('hidden');
+        }
+
+        // Close Edit Admin Modal
+        document.getElementById('closeEditAdminModal').addEventListener('click', () => {
+            document.getElementById('editAdminModal').classList.add('hidden');
+        });
+
+        // Edit admin
+        document.getElementById('editAdminForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const adminId = document.getElementById('edit_admin_id').value;
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+
+            const response = await fetch(`/api/admins/${adminId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('token') // Assuming you have a token for authentication
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                fetchAdmins(); // Refresh the admins table
+                e.target.reset(); // Reset the form
+                document.getElementById('editAdminModal').classList.add('hidden'); // Hide the modal
+            } else {
+                alert('Failed to update admin');
+            }
+        });
+
+        // Confirm delete
+        function confirmDelete(adminId) {
+            if (confirm('Are you sure you want to delete this admin?')) {
+                deleteAdmin(adminId);
+            }
+        }
+
+        // Delete admin
+        async function deleteAdmin(adminId) {
+            const response = await fetch(`/api/admins/${adminId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('token') // Assuming you have a token for authentication
+                }
+            });
+
+            if (response.ok) {
+                fetchAdmins(); // Refresh the admins table
+            } else {
+                alert('Failed to delete admin');
+            }
+        }
+
+        // Fetch admins on page load
+        fetchAdmins();
+    </script>
+</body>
+{%endblock%}
