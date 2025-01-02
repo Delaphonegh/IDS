@@ -1,43 +1,73 @@
-<!-- userportal/profile.html -->
 {% extends "ids/base.html" %}
-{% block content %}
+{% block content %} 
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            margin-top: 30px;
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .btn {
+            margin-right: 10px;
+        }
+        .pin-buttons {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+    </style>
+    <script>
+        function showPin() {
+            const pin = "{{ userinfo.pin_code }}"; // Get the user's PIN from the server
+            alert("Your PIN is: " + pin); // Show the PIN in an alert popup
+        }
+    </script>
+</head>
 <body>
     <div class="container">
-        <h1 class="mt-5">User Profile Settings</h1>
-        <form method="POST" class="mt-4">
-            <div class="form-group">
-                <label for="username">Username:</label>
-                <input type="text" name="username" class="form-control" value="{{ userinfo.username }}" required>
+        <div class="card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h4">User Profile Settings</h1>
+                <div class="pin-buttons">
+                    <button class="btn btn-info" onclick="showPin()">View PIN</button>
+                    <a href="{{ url_for('users.change_pin') }}" class="btn btn-warning">Change PIN</a>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="email">Email:</label>
-                <input type="email" name="email" class="form-control" value="{{ userinfo.email }}" required>
-            </div>
-            <div class="form-group">
-                <label for="name">Name:</label>
-                <input type="text" name="name" class="form-control" value="{{ userinfo.name }}" required>
-            </div>
-            <div class="form-group">
-                <label for="number">Phone Number:</label>
-                <input type="text" name="number" class="form-control" value="{{ userinfo.phone_number }}" required>
-            </div>
-
-            
-            <div class="form-group" style="margin-top: 10px;">
-                <button type="submit" class="btn btn-primary">Update Profile</button>
-            </div>
-        </form>
-
-        <div class="mt-4">
-            <button class="btn btn-info" onclick="showPin()">View PIN</button>
-            <a href="{{ url_for('users.change_pin') }}" class="btn btn-warning">Change PIN</a>
+            <form method="POST" class="mt-4">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" name="username" class="form-control" value="{{ userinfo.username }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" name="email" class="form-control" value="{{ userinfo.email }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="name">Name:</label>
+                    <input type="text" name="name" class="form-control" value="{{ userinfo.name }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="number">Phone Number:</label>
+                    <input type="text" name="number" class="form-control" value="{{ userinfo.number }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="location">Location:</label>
+                    <input type="text" name="location" class="form-control" value="{{ userinfo.location }}" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Update Profile</button>
+                </div>
+            </form>
         </div>
     </div>
 </body>
-<script>
-    function showPin() {
-        const pin = "{{ userinfo.pin_code }}"; // Get the user's PIN from the server
-        alert("Your PIN is: " + pin); // Show the PIN in an alert popup
-    }
-</script>
 {%endblock%}

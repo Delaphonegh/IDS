@@ -41,6 +41,7 @@ def validate_pin():
 
 @telafric.route('/api/subscribe', methods=['POST','GET'])
 def subscribe():
+    # data = request.get_json()
     phone_number = request.args.get('phone_number')
 
     # Generate a random secure 4-digit PIN code
@@ -51,37 +52,8 @@ def subscribe():
     db.session.add(new_subscriber)
     db.session.commit()
 
-    # Send welcome SMS with PIN and app information
-    sms_url = "https://api.wirepick.com/httpsms/send"
-    welcome_message = (
-        f"Welcome to Delaphone! "
-        f"Your PIN is: {pin_code}\n"
-        "Download our app: https://play.google.com/store/apps/details?id=com.delaphone.app"
-    )
-    wirepick_key =  os.environ.get('WIREPICK_KEY')
-    
-    sms_params = {
-        'client': 'raymond',
-        'password': wirepick_key,
-        'phone': phone_number,
-        'text': welcome_message,
-        'from': 'Delaphone'
-    }
-    
-    try:
-        sms_response = requests.get(sms_url, params=sms_params)
-        print("Welcome SMS response:", sms_response.content)
-        
-        if sms_response.status_code != 200:
-            print("Failed to send welcome SMS")
-            # Note: We don't return an error here as the subscription was successful
-    except Exception as e:
-        print(f"Error sending welcome SMS: {str(e)}")
-        # We continue even if SMS fails as the subscription was successful
-
     return jsonify({"status": True, "pin_code": pin_code}), 201
-
-
+# ... existing code ...
 @telafric.route('/api/delete', methods=['DELETE','GET'])
 def delete_all_subscribers():
     try:
@@ -486,19 +458,18 @@ def send_sms():
     print("send_sms called")
     
     data = request.get_json()
-    print("data", data)
+    print("data",data)
     phone_number = data.get('phone_number').strip() if data.get('phone_number') else ''
     amount = data.get('amount') 
     phone_number = unquote(phone_number)
-    print("number", phone_number)
-    print("amount", amount)
-    
+    print("number",phone_number)
+    print("number",amount)
     if not phone_number:
         print("Missing phone number or amount")
         return jsonify({"error": "Missing phone number or amount"}), 400
 
     subscriber = User.query.filter_by(phone_number=phone_number).first()
-    print("subscriber response", subscriber)
+    print("subscriber response",subscriber)
     if not subscriber:
         print("Subscriber not found")
         return jsonify({"error": "Subscriber not found"}), 404
@@ -516,8 +487,8 @@ def send_sms():
         "Content-Type": "application/json"
     }
     payload = {
-        "amount": int(amount * 100),  # Convert to kobo
-        "email": 'raymond@delaphonegh.com',
+        "amount": amount *100,
+        "email": 'raymond@delaphonegh.com',  # Assuming subscriber has an email field
         "reference": reference,
         "callback_url": f"{base_url}/api/paystack_callback/{subscriber.id}/{reference}"
     }
@@ -532,22 +503,26 @@ def send_sms():
 
     payment_link = paystack_response.json()['data']['authorization_url']
 
-    # Send SMS with new API
-    wirepick_key =  os.environ.get('WIREPICK_KEY')
-    sms_url = "https://api.wirepick.com/httpsms/send"
-    sms_params = {
-        'client': 'raymond',
-        'password': wirepick_key,
-        'phone': phone_number,
-        'text': f"Follow the link to top-up: {payment_link}",
-        'from': 'Delaphone'
-    }
-    
-    print("SMS params:", sms_params)
-    sms_response = requests.get(sms_url, params=sms_params)
-    print("SMS response:", sms_response.content)
+    # Send SMS with payment link
+    sms_token = os.environ.get('SMS_SECRET')
+    if not sms_token:
+        print("Missing SMS token")
+        return jsonify({"error": "Missing SMS token"}), 500
 
-    if sms_response.status_code != 200:
+    sms_headers = {
+        'Authorization': 'Bearer ' + sms_token,
+        'Content-Type': 'application/json'
+    }
+    sms_payload = {
+        "sender_id": "RaymondDLP",
+        "recipients": [phone_number],
+        "message": f"Follow the link to top-up: {payment_link}"
+    }
+    print("SMS payload:", sms_payload)
+    sms_response = requests.post('https://staging.api.delaphonegh.com/v1/sms', headers=sms_headers, json=sms_payload)
+    print("SMS response status code:", sms_response.content)
+
+    if sms_response.status_code != 202:
         print("Failed to send sms")
         return jsonify({"error": "Failed to send sms"}), 500
 
