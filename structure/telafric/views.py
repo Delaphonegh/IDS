@@ -194,8 +194,8 @@ def deduct_balance():
     print("Phone Number:", phone_number)
     print("Duration:", duration)
     print("Destination:", destination)
-    # if int(duration) < 1:
-    #     return jsonify({"error": "Call not billable"}), 400
+    if float(duration) < 1:
+        return jsonify({"error": "Call not billable"}), 400
 
 
     # Validate parameters
@@ -226,7 +226,7 @@ def deduct_balance():
         # Get the longest matching prefix (most specific)
         rate = max(matching_rates, key=lambda x: len(x.destination_prefix))
         print(f"Selected Rate: {rate}")
-        duration = math.ceil(duration / 60)
+        duration = math.ceil(float(duration) / 60)  # Convert string to float first, then calculate minutes
 
         cost = float(duration) * rate.rate_per_minute  # Calculate cost based on the rate
         print("Calculated cost:", cost)
