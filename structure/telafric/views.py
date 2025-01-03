@@ -11,7 +11,7 @@ from urllib.parse import unquote, urlencode
 import os
 from datetime import datetime
 from werkzeug.security import generate_password_hash
-
+import math
 telafric = Blueprint('telafric', __name__)
 
 # ... existing code ...
@@ -226,6 +226,7 @@ def deduct_balance():
         # Get the longest matching prefix (most specific)
         rate = max(matching_rates, key=lambda x: len(x.destination_prefix))
         print(f"Selected Rate: {rate}")
+        duration = math.ceil(duration / 60)
 
         cost = float(duration) * rate.rate_per_minute  # Calculate cost based on the rate
         print("Calculated cost:", cost)
