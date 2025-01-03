@@ -56,7 +56,7 @@ def subscribe():
     welcome_message = (
         f"Welcome to Delaphone! "
         f"Your PIN is: {pin_code}\n"
-        "Download our app: https://play.google.com/store/apps/details?id=com.delaphone.app"
+        "Visit our portal: https://ids-slw6.onrender.com/"
     )
     wirepick_key =  os.environ.get('WIREPICK_KEY')
     
@@ -194,8 +194,8 @@ def deduct_balance():
     print("Phone Number:", phone_number)
     print("Duration:", duration)
     print("Destination:", destination)
-    if duration < 1:
-        return jsonify({"error": "Call not billable"}), 400
+    # if int(duration) < 1:
+    #     return jsonify({"error": "Call not billable"}), 400
 
 
     # Validate parameters
