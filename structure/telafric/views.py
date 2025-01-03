@@ -646,6 +646,33 @@ def paystack_callback(subscriber_id, reference):
                 db.session.add(payment)
                 db.session.commit()
                 print("Payment saved to model")
+                sms_url = "https://api.wirepick.com/httpsms/send"
+                confirmation_message = (
+                    f"Top-up successful! "
+                    f"Amount: USD {amount_in_main_currency:.2f}\n"
+                    f"New balance: USD {subscriber.balance:.2f}\n"
+                    f"Thank you for using TelAfric!"
+                )
+                wirepick_key =  os.environ.get('WIREPICK_KEY')
+
+                
+                sms_params = {
+                    'client': 'raymond',
+                    'password': wirepick_key,
+                    'phone': subscriber.phone_number,
+                    'text': confirmation_message,
+                    'from': 'Delaphone'
+                }
+                
+                try:
+                    sms_response = requests.get(sms_url, params=sms_params)
+                    print("Confirmation SMS response:", sms_response.content)
+                    
+                    if sms_response.status_code != 200:
+                        print("Failed to send confirmation SMS")
+                except Exception as e:
+                    print(f"Error sending confirmation SMS: {str(e)}")
+
                 print({"status": "success", "message": "Payment successful and balance updated"})
                 return render_template('telafric/paymentconfirmation.html',amount=amount_in_main_currency)
             else:
