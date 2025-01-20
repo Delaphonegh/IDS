@@ -4,7 +4,7 @@ from flask import render_template, Blueprint, session, redirect, url_for, jsonif
 import random
 from flask_sqlalchemy import SQLAlchemy
 from structure import db,mail ,photos,app
-from flask_login import current_user
+from flask_login import current_user,login_required
 import requests
 import uuid 
 from urllib.parse import unquote, urlencode
@@ -763,7 +763,13 @@ def send_sms2():
     print("SMS sent successfully")
     return jsonify({"status": "success", "payment_link": payment_link}), 200
 
+
+
+
+
+#Portal
 @telafric.route('/dashboard', methods=['GET'])
+@login_required
 def dashboard():
     if not current_user.is_authenticated:
         return redirect(url_for('users.login'))
@@ -781,6 +787,7 @@ def dashboard():
 
 
 @telafric.route('/top_up', methods=['GET'])
+@login_required
 def top_up():
     # Get amount from query parameter, default to 10 if not provided
     amount = request.args.get('amount', '10.00')
@@ -791,6 +798,9 @@ def top_up():
     # PayPal sandbox URL (use PDT endpoint)
     paypal_url = "https://www.sandbox.paypal.com/cgi-bin/webscr"
     
+    # Assuming BASE_URL is defined in your .env file
+    BASE_URL = os.environ.get('BASE_URL')
+
     # PayPal parameters (updated)
     params = {
         "cmd": "_xclick",
@@ -798,9 +808,9 @@ def top_up():
         "item_name": "Account Top Up",
         "amount": amount,
         "currency_code": "USD",
-        "return": url_for('telafric.paypal_success', transaction_id=transaction_id, _external=True),
-        "cancel_return": url_for('telafric.dashboard', _external=True),
-        "notify_url": url_for('telafric.paypal_ipn', _external=True),
+        "return": f"{BASE_URL}/paypal_success?transaction_id={transaction_id}",  # Actual URL for success
+        "cancel_return": f"{BASE_URL}/dashboard",  # Actual URL for cancel
+        "notify_url": f"{BASE_URL}/paypal_ipn",  # Actual URL for IPN
         "custom": transaction_id,  # Pass transaction ID for tracking
         "no_shipping": "1",  # No shipping required
         "no_note": "1"  # No notes allowed
@@ -808,6 +818,7 @@ def top_up():
     
     # Construct redirect URL
     redirect_url = paypal_url + "?" + urlencode(params)
+    print(redirect_url)
     return redirect(redirect_url)
 
 @telafric.route('/paypal_success')
@@ -828,6 +839,7 @@ def paypal_success():
 
 @telafric.route('/paypal_ipn', methods=['POST'])
 def paypal_ipn():
+    print("processing payment")
     # Verify IPN message with PayPal
     data = request.form.copy()
     data['cmd'] = '_notify-validate'
@@ -870,6 +882,7 @@ def paypal_ipn():
     return "OK"
 
 @telafric.route('/rates', methods=['GET'])
+@login_required
 def view_rates():
     rates = Rate.query.all()  # Fetch all rates from the database
     return render_template('ids/portal/rates.html', rates=rates)
@@ -877,7 +890,7 @@ def view_rates():
 
 
 @telafric.route('/call_logs', methods=['GET'])
-# @login_required
+@login_required
 def view_call_logs():
     if not current_user.is_authenticated:
         return redirect(url_for('auth.login'))  # Redirect to login if not authenticated
@@ -900,6 +913,7 @@ def view_call_logs():
     return render_template('ids/portal/call_logs.html', call_logs=call_logs, search_query=search_query)
 
 @telafric.route('/payments', methods=['GET'])
+@login_required
 def view_payments():
     if not current_user.is_authenticated:
         return redirect(url_for('auth.login'))  # Redirect to login if not authenticated

@@ -1,76 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8" />
-        <title>Log In | Adminto - Responsive Admin Dashboard Template</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta content="A fully featured admin theme which can be used to build CRM, CMS, etc." name="description" />
-        <meta content="Coderthemes" name="author" />
-        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <!-- App favicon -->
-        <link rel="shortcut icon" href="assets/images/favicon.ico">
-
-		<!-- App css -->
-
-		<link href="assets/css/app.min.css" rel="stylesheet" type="text/css" id="app-style" />
-
-		<!-- icons -->
-		<link href="assets/css/icons.min.css" rel="stylesheet" type="text/css" />
-        <link rel="stylesheet" type="text/css"
-        href="{{ url_for('static',filename='main/main/layouts/assets/css/app.min.css') }}">
-  <link rel="stylesheet" type="text/css"
-        href="{{ url_for('static',filename='main/main/layouts/assets/css/icons.min.css') }}">
-
-    </head>
-
-    <body class="loading authentication-bg authentication-bg-pattern">
-
-        <div class="account-pages my-5">
-            <div class="container">
-
-                <div class="row justify-content-center">
-                    <div class="col-md-8 col-lg-6 col-xl-4">
-                        <div class="text-center">   
-                            <a href="index.html">
-                                <img src="assets/images/logo-dark.png" alt="" height="22" class="mx-auto">
-                            </a>
-                            <p class="text-muted mt-2 mb-4">Responsive Admin Dashboard</p>
-
-                        </div>
-
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TelAfric Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
 
 
                         {% block content %}
 
                         {% endblock %}
 
+<!-- Add this just before the closing </body> tag -->
+<div id="toast" class="fixed right-4 top-4 transform transition-transform duration-300 ease-in-out translate-x-full">
+    <div class="flex items-center p-4 mb-4 text-gray-500 bg-white rounded-lg shadow max-w-xs" role="alert">
+        <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg">
+            <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+            </svg>
+        </div>
+        <div id="toast-message" class="ml-3 text-sm font-normal"></div>
+        <button type="button" class="ml-auto -mx-1.5 -my-1.5 text-gray-400 hover:text-gray-900 rounded-lg p-1.5 inline-flex h-8 w-8" onclick="hideToast()">
+            <span class="sr-only">Close</span>
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+        </button>
+    </div>
+</div>
 
+<script>
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toast-message');
+    
+    // Set message
+    toastMessage.textContent = message;
+    
+    // Set color based on type
+    if (type === 'success') {
+        toast.querySelector('.inline-flex').classList.add('text-green-500');
+    } else if (type === 'error') {
+        toast.querySelector('.inline-flex').classList.add('text-red-500');
+    }
+    
+    // Show toast
+    toast.classList.remove('translate-x-full');
+    
+    // Hide after 3 seconds
+    setTimeout(() => {
+        hideToast();
+    }, 3000);
+}
 
+function hideToast() {
+    const toast = document.getElementById('toast');
+    toast.classList.add('translate-x-full');
+}
 
+// Check for flash messages on page load
+document.addEventListener('DOMContentLoaded', function() {
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                showToast('{{ message }}', '{{ category }}');
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+});
+</script>
 
-                    </div>
-                    <!-- end page -->
-            
-                    <!-- Vendor -->
-                    <script src="assets/libs/jquery/jquery.min.js"></script>
-                    <script src="assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
-                    <script src="assets/libs/simplebar/simplebar.min.js"></script>
-                    <script src="assets/libs/node-waves/waves.min.js"></script>
-                    <script src="assets/libs/waypoints/lib/jquery.waypoints.min.js"></script>
-                    <script src="assets/libs/jquery.counterup/jquery.counterup.min.js"></script>
-                    <script src="assets/libs/feather-icons/feather.min.js"></script>
-            
-                    <!-- App js -->
-                    <script src="assets/js/app.min.js"></script>
-                    <script src="{{ url_for('static',filename='main/main/layouts/assets/js/app.min.js') }}"></script>
-
-                    <script src="{{ url_for('static',filename='main/main/layouts/assets/libs/jquery/jquery.min.js') }}"></script>
-                    <script src="{{ url_for('static',filename='main/main/layouts/assets/libs/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-                    <script src="{{ url_for('static',filename='main/main/layouts/assets/libs/simplebar/simplebar.min.js') }}"></script>
-                    <script src="{{ url_for('static',filename='main/main/layouts/assets/libs/node-waves/waves.min.js') }}"></script>
-                    <script src="{{ url_for('static',filename='main/main/layouts/assets/libs/waypoints/lib/jquery.waypoints.min.js') }}"></script>
-                    <script src="{{ url_for('static',filename='main/main/layouts/assets/libs/jquery.counterup/jquery.counterup.min.js') }}"></script>
-                    <script src="{{ url_for('static',filename='main/main/layouts/assets/libs/feather-icons/feather.min.js') }}"></script>
-  
                 </body>
             </html>
