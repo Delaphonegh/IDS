@@ -811,7 +811,7 @@ def top_up():
         "return": f"{BASE_URL}/paypal_success?transaction_id={transaction_id}",  # Actual URL for success
         "cancel_return": f"{BASE_URL}/dashboard",  # Actual URL for cancel
         "notify_url": f"{BASE_URL}/paypal_ipn",  # Actual URL for IPN
-        "custom": transaction_id,  # Pass transaction ID for tracking
+        "custom": current_user.id,  # Store subscriber ID in the custom field
         "no_shipping": "1",  # No shipping required
         "no_note": "1"  # No notes allowed
     }
@@ -839,7 +839,7 @@ def paypal_success():
 
 @telafric.route('/paypal_ipn', methods=['POST'])
 def paypal_ipn():
-    print("processing payment")
+    print("Processing IPN")
     # Verify IPN message with PayPal
     data = request.form.copy()
     data['cmd'] = '_notify-validate'
@@ -850,10 +850,11 @@ def paypal_ipn():
     if response.text == "VERIFIED":
         # Extract payment details
         payment_status = request.form.get('payment_status')
-        transaction_id = request.form.get('custom')
+        transaction_id = request.form.get('custom')  # Use custom field for transaction ID
         amount = request.form.get('mc_gross')
         payer_email = request.form.get('payer_email')
-        
+        subscriber_id = request.form.get('custom')  # Get subscriber ID from the custom field
+
         # Find existing payment or create new one
         payment = Payment.query.filter_by(reference=transaction_id).first()
         
@@ -864,7 +865,7 @@ def paypal_ipn():
                 amount=float(amount),
                 paid_at=datetime.utcnow(),
                 status=payment_status.lower(),
-                subscriber_id=current_user.id,  # Ensure current_user is imported/available
+                subscriber_id=subscriber_id,  # Use the subscriber ID from the custom field
                 aggregator='PayPal'
             )
             db.session.add(payment)
@@ -873,9 +874,12 @@ def paypal_ipn():
             payment.status = payment_status.lower()
             payment.paid_at = datetime.utcnow()
         
-        # Update user balance
+        # Update user balance if payment is completed
         if payment_status.lower() == 'completed':
-            current_user.balance += float(amount)
+            subscriber = User.query.get(subscriber_id)  # Find the subscriber by ID
+            if subscriber:
+                subscriber.balance += float(amount)
+                db.session.commit()
         
         db.session.commit()
     
