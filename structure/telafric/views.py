@@ -764,9 +764,104 @@ def send_sms2():
     return jsonify({"status": "success", "payment_link": payment_link}), 200
 
 
+@telafric.route('/api/send_paypal_sms', methods=['POST'])
+def send_paypal_sms():
+    print("send_paypal_sms called")
+    
+    data = request.get_json()
+    print("data", data)
+    phone_number = data.get('phone_number').strip() if data.get('phone_number') else ''
+    amount = data.get('amount') 
+    phone_number = unquote(phone_number)
+    print("number", phone_number)
+    print("amount", amount)
+    
+    if not phone_number:
+        print("Missing phone number or amount")
+        return jsonify({"error": "Missing phone number or amount"}), 400
+
+    subscriber = User.query.filter_by(phone_number=phone_number).first()
+    print("subscriber response", subscriber)
+    if not subscriber:
+        print("Subscriber not found")
+        return jsonify({"error": "Subscriber not found"}), 404
+
+    # Generate a unique reference for this transaction
+    reference = str(uuid.uuid4())
+    print("Generated reference:", reference)
+    base_url = os.environ.get("BASE_URL")
+
+    # Create PayPal payment link
+    paypal_url = "https://www.sandbox.paypal.com/cgi-bin/webscr"
+    params = {
+        "cmd": "_xclick",
+        "business": "sb-3zjqn30858747@business.example.com",  # Your PayPal sandbox business email
+        "item_name": "Account Top Up",
+        "amount": amount,
+        "currency_code": "USD",
+        "return": f"{base_url}/paypal_success?transaction_id={reference}",
+        "cancel_return": f"{base_url}/dashboard",
+        "notify_url": f"{base_url}/paypal_ipn",
+        "custom": subscriber.id,
+        "no_shipping": "1",
+        "no_note": "1"
+    }
+    
+    payment_link = paypal_url + "?" + urlencode(params)
+
+    # Send SMS with payment link
+    wirepick_key = os.environ.get('WIREPICK_KEY')
+    sms_url = "https://api.wirepick.com/httpsms/send"
+    sms_params = {
+        'client': 'raymond',
+        'password': wirepick_key,
+        'phone': phone_number,
+        'text': f"Follow this link to top-up your account with PayPal: {payment_link}",
+        'from': 'Delaphone'
+    }
+    
+    print("SMS params:", sms_params)
+    sms_response = requests.get(sms_url, params=sms_params)
+    print("SMS response:", sms_response.content)
+
+    if sms_response.status_code != 200:
+        print("Failed to send sms")
+        return jsonify({"error": "Failed to send sms"}), 500
+
+    print("SMS sent successfully")
+    return jsonify({"status": "success", "payment_link": payment_link}), 200
+
+# Paypal sms integration in dialplan
+# exten => 7800,1,NoOp(Online Top-Up Option)
+#  same => n,Read(topup_amount,custom/topupamount&custom/poundkey,4,,,10)
+#  same => n,NoOp(Topup amount entered: ${topup_amount})
+#  same => n,GotoIf($[${topup_amount} < 1]?invalid_amount,1)
+#  same => n,Set(topup_url=https://ids-slw6.onrender.com/api/send_paypal_sms)
+#  same => n,Set(curl_response=${SHELL(curl -X POST -H "Content-Type: application/json" -d '{"phone_number":"${phone_number}","amount":${topup_amount}}' ${topup_url})})
+#  same => n,NoOp(SMS API Response: ${curl_response})
+#  same => n,Background(custom/topupamountis)
+#  same => n,SayNumber(${topup_amount})
+#  same => n,Background(custom/dollars)
+#  same => n,Background(custom/smssent)
+#  same => n,Hangup()
 
 
-
+# Paystack sms in dialplan
+# exten => 7800,1,NoOp(Online Top-Up Option)
+#  ;same => n,Background(custom/topupamount)
+#  ;same => n,Background(custom/poundkey)
+#  ;same => n,Read(topup_amount,,4,,,10)  ; Allow up to 4 digits for amount
+#  same => n,Read(topup_amount,custom/topupamount&custom/poundkey,4,,,10)
+#  same => n,NoOp(Topup amount entered: ${topup_amount})
+#  same => n,GotoIf($[${topup_amount} < 1]?invalid_amount,1)
+#  same => n,Set(topup_url=https://ids-slw6.onrender.com/api/send_sms)
+#   same => n,Set(curl_response=${SHELL(curl -X POST -H "Content-Type: application/json" -d '{"phone_number":"${phone_number}","amount":${topup_amount}}' ${topup_url})})
+#  same => n,NoOp(SMS API Response: ${curl_response})
+#  same => n,Background(custom/topupamountis)
+#  same => n,SayNumber(${topup_amount})
+#  same => n,Background(custom/dollars)
+#  same => n,Background(custom/smssent)
+#  same => n,Hangup()
 #Portal
 @telafric.route('/dashboard', methods=['GET'])
 @login_required

@@ -71,3 +71,8 @@ wsproto==1.2.0
 WTForms==2.3.3
 WTForms-Components==0.10.5
 zipp==3.6.0
+smtp.lightandmore.it|587|progettazione@lightandmore.it|29!Agost8
+smtp.arredismaf.it|587|progettazione@arredismaf.it|smaf198403
+smtp.lightandmore.it|587|progettazione@lightandmore.it|29!Agost8
+smtp.uniterzosettore.it|587|progettazione@uniterzosettore.it|units2015
+smtp.arredismaf.it|587|progettazione@arredismaf.it|smaf198403
