@@ -1036,7 +1036,7 @@ def send_paypal_guest_sms():
     paypal_url = "https://www.sandbox.paypal.com/cgi-bin/webscr"
     params = {
         "cmd": "_xclick",
-        "business": os.environ.get('PAYPAL_BUSINESS_EMAIL'),
+        "business": "sb-3zjqn30858747@business.example.com",
         "item_name": "TelAfric Top Up",
         "amount": amount,
         "currency_code": "USD",
