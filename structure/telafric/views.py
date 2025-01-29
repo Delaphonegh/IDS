@@ -988,6 +988,160 @@ def view_rates():
 
 
 
+
+
+
+
+
+#Next 3 routes are for if we want to not allow users login to paypal account to pay
+
+@telafric.route('/api/send_paypal_guest_sms', methods=['POST'])
+def send_paypal_guest_sms():
+    print("send_paypal_guest_sms called")
+    
+    data = request.get_json()
+    print("data", data)
+    phone_number = data.get('phone_number').strip() if data.get('phone_number') else ''
+    amount = data.get('amount') 
+    phone_number = unquote(phone_number)
+    print("number", phone_number)
+    print("amount", amount)
+    
+    if not phone_number:
+        print("Missing phone number or amount")
+        return jsonify({"error": "Missing phone number or amount"}), 400
+
+    subscriber = User.query.filter_by(phone_number=phone_number).first()
+    print("subscriber response", subscriber)
+    if not subscriber:
+        print("Subscriber not found")
+        return jsonify({"error": "Subscriber not found"}), 404
+
+    # Generate a unique reference
+    reference = str(uuid.uuid4())
+    base_url = os.environ.get("BASE_URL")
+
+    # Create payment record
+    payment = Payment(
+        reference=reference,
+        amount=amount,
+        subscriber_id=subscriber.id,
+        status='pending',
+        aggregator='PayPal'
+    )
+    db.session.add(payment)
+    db.session.commit()
+
+    # Create PayPal checkout URL with guest checkout enabled
+    paypal_url = "https://www.sandbox.paypal.com/cgi-bin/webscr"
+    params = {
+        "cmd": "_xclick",
+        "business": os.environ.get('PAYPAL_BUSINESS_EMAIL'),
+        "item_name": "TelAfric Top Up",
+        "amount": amount,
+        "currency_code": "USD",
+        "return": f"{base_url}/paypal_voice_success?reference={reference}",
+        "cancel_return": f"{base_url}/paypal_cancel?reference={reference}",
+        "notify_url": f"{base_url}/paypal_ipn_voice",
+        "custom": reference,
+        "no_shipping": "1",
+        "no_note": "1",
+        "solution_type": "Sole",  # Enable guest checkout
+        "landing_page": "Billing",  # Show the credit card form first
+        "guest_checkout": "1"  # Allow guest checkout
+    }
+    
+    payment_url = f"{paypal_url}?{urlencode(params)}"
+
+    # Send SMS with payment link
+    wirepick_key = os.environ.get('WIREPICK_KEY')
+    sms_url = "https://api.wirepick.com/httpsms/send"
+    sms_params = {
+        'client': 'raymond',
+        'password': wirepick_key,
+        'phone': phone_number,
+        'text': f"Top up your account here (no login required): {payment_url}",
+        'from': 'Delaphone'
+    }
+    
+    print("SMS params:", sms_params)
+    sms_response = requests.get(sms_url, params=sms_params)
+    print("SMS response:", sms_response.content)
+
+    if sms_response.status_code != 200:
+        print("Failed to send sms")
+        return jsonify({"error": "Failed to send sms"}), 500
+
+    print("SMS sent successfully")
+    return jsonify({"status": "success", "payment_url": payment_url}), 200
+
+# Update the existing success route to handle the payment completion
+@telafric.route('/paypal_voice_success')
+def paypal_success():
+    reference = request.args.get('reference')
+    payment = Payment.query.filter_by(reference=reference).first()
+    
+    if payment and payment.status == 'completed':
+        return render_template('payment_success.html', amount=payment.amount)
+    
+    return redirect(url_for('telafric.dashboard'))
+
+# Update the IPN handler to process the payment
+@telafric.route('/paypal_ipn_voice', methods=['POST'])
+def paypal_ipn():
+    try:
+        # Verify IPN with PayPal
+        verify_url = 'https://www.sandbox.paypal.com/cgi-bin/webscr'
+        params = request.form.to_dict()
+        params['cmd'] = '_notify-validate'
+        
+        response = requests.post(verify_url, data=params)
+        
+        if response.text == 'VERIFIED':
+            reference = request.form.get('custom')
+            payment_status = request.form.get('payment_status')
+            
+            if payment_status == 'Completed':
+                payment = Payment.query.filter_by(reference=reference).first()
+                
+                if payment and payment.status != 'completed':
+                    # Update payment status
+                    payment.status = 'completed'
+                    payment.paid_at = datetime.utcnow()
+                    
+                    # Update subscriber balance
+                    subscriber = User.query.get(payment.subscriber_id)
+                    subscriber.balance += payment.amount
+                    
+                    db.session.commit()
+                    
+                    # Send confirmation SMS
+                    wirepick_key = os.environ.get('WIREPICK_KEY')
+                    confirmation_message = (
+                        f"Top-up successful! "
+                        f"Amount: USD {payment.amount:.2f}\n"
+                        f"New balance: USD {subscriber.balance:.2f}\n"
+                        f"Thank you for using TelAfric!"
+                    )
+                    
+                    sms_params = {
+                        'client': 'raymond',
+                        'password': wirepick_key,
+                        'phone': subscriber.phone_number,
+                        'text': confirmation_message,
+                        'from': 'Delaphone'
+                    }
+                    
+                    requests.get("https://api.wirepick.com/httpsms/send", params=sms_params)
+        
+        return 'OK'
+    except Exception as e:
+        print(f"IPN Error: {str(e)}")
+        return 'ERROR', 500
+
+
+
+
 @telafric.route('/call_logs', methods=['GET'])
 @login_required
 def view_call_logs():
