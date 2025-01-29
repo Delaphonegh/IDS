@@ -1077,7 +1077,7 @@ def send_paypal_guest_sms():
 
 # Update the existing success route to handle the payment completion
 @telafric.route('/paypal_voice_success')
-def paypal_success():
+def paypal_voice_success():
     reference = request.args.get('reference')
     payment = Payment.query.filter_by(reference=reference).first()
     
@@ -1088,7 +1088,7 @@ def paypal_success():
 
 # Update the IPN handler to process the payment
 @telafric.route('/paypal_ipn_voice', methods=['POST'])
-def paypal_ipn():
+def paypal_ipn_voice():
     try:
         # Verify IPN with PayPal
         verify_url = 'https://www.sandbox.paypal.com/cgi-bin/webscr'
