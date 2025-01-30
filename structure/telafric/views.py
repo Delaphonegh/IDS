@@ -1327,3 +1327,30 @@ def edit_admin(admin_id):
     db.session.commit()
 
     return jsonify({"message": "Admin account updated successfully!"}), 200  # Return success message
+
+
+
+
+#Infobip test thingy
+references = [
+    {"reference": "ref123", "data": "Data for ref123"},
+    {"reference": "abc456", "data": "Data for abc456"},
+    {"reference": "xyz789", "data": "Data for xyz789"},
+]
+
+
+@app.route('/api/reference/<string:reference>', methods=['GET'])
+def get_reference_data(reference):
+    """
+    Retrieves data associated with a given reference.
+
+    Args:
+        reference: The reference string to look up.
+
+    Returns:
+        JSON response with the data if found, otherwise a 404 error.
+    """
+    for ref_dict in references:
+        if ref_dict['reference'] == reference:
+            return jsonify(ref_dict), 200  # Return 200 OK if found
+    return jsonify({"error": "Reference not found"}), 404  # Return 404 Not Found
