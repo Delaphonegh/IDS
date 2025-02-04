@@ -1483,16 +1483,17 @@ def redemption_status():
     return jsonify({"error": "Withdrawal request not found"}), 404  # Return an error if not found
 
 
-@telafric.route('/api/statement_request', methods=['GET'])
-def statement_request():
-    menutype = request.args.get('menutype')
-    reference = request.args.get('reference')
-    
+@telafric.route('/api/statement_request/<string:menutype>/<string:reference>', methods=['GET'])
+def statement_request(menutype, reference):
+    print(f"Received statement request with menutype: {menutype} and reference: {reference}")
+
     if not menutype or not reference:
+        print("Error: Missing menutype or reference")
         return jsonify({"error": "Missing menutype or reference"}), 400  # Return an error if any field is missing
 
     # Here you can define the logic to generate or retrieve the statement link
     # For demonstration, we'll return a dummy link
     statement_link = f"https://example.com/statements/{reference}"
+    print(f"Generated statement link: {statement_link}")
 
     return jsonify({"link": statement_link}), 200  # Return the statement link
