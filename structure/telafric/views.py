@@ -1420,9 +1420,9 @@ def get_public_rates():
 
 #Infobip test thingy
 references = [
-    {"reference": "ref123", "data": "Data for ref123", "balance": 10.00, "pending_credits": 5.00},  # Example balance and pending credits
-    {"reference": "abc456", "data": "Data for abc456", "balance": 20.00, "pending_credits": 3.00},  # Example balance and pending credits
-    {"reference": "xyz789", "data": "Data for xyz789", "balance": 30.00, "pending_credits": 0.00},  # Example balance and pending credits
+    {"reference": "ref123", "data": "Data for ref123", "balance": 10.00, "pending_credits": 5.00, "pin": "1234"},  # Example balance and pending credits
+    {"reference": "abc456", "data": "Data for abc456", "balance": 20.00, "pending_credits": 3.00, "pin": "5678"},  # Example balance and pending credits
+    {"reference": "xyz789", "data": "Data for xyz789", "balance": 30.00, "pending_credits": 0.00, "pin": "9101"},  # Example balance and pending credits
 ]
 
 
@@ -1524,6 +1524,31 @@ def get_pending_credits(reference):
                 "reference": ref["reference"],
                 "pending_credits": ref["pending_credits"]
             }), 200  # Return the pending credits if found
+
+    print("Error: Reference not found")
+    return jsonify({"error": "Reference not found"}), 404  # Return an error if the reference is not found
+
+@telafric.route('/api/reset_pin', methods=['POST'])
+def reset_pin():
+    data = request.get_json()
+    
+    reference = data.get('reference')
+    current_pin = data.get('current_pin')
+    new_pin = data.get('new_pin')
+
+    if not reference or not current_pin or not new_pin:
+        return jsonify({"error": "Missing reference, current_pin, or new_pin"}), 400  # Return an error if any field is missing
+
+    # Find the reference in the references list
+    for ref in references:
+        if ref["reference"] == reference:
+            if ref["pin"] == current_pin:
+                ref["pin"] = new_pin  # Update the PIN
+                print(f"PIN for reference {reference} has been updated to {new_pin}")
+                return jsonify({"message": "PIN updated successfully"}), 200  # Return success message
+            else:
+                print("Error: Current PIN does not match")
+                return jsonify({"error": "Current PIN is incorrect"}), 403  # Return an error if the current PIN is incorrect
 
     print("Error: Reference not found")
     return jsonify({"error": "Reference not found"}), 404  # Return an error if the reference is not found
