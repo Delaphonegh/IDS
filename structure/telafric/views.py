@@ -1467,19 +1467,21 @@ def withdrawal_request():
     
     return jsonify({"message": "Withdrawal request added successfully", "request": new_request}), 201  # Return success response
 
-@telafric.route('/api/redemption_status', methods=['GET'])
-def redemption_status():
-    menutype = request.args.get('menutype')
-    reference = request.args.get('reference')
-    
+@telafric.route('/api/redemption_status/<string:menutype>/<string:reference>', methods=['GET'])
+def redemption_status(menutype, reference):
+    print(f"Received redemption status request with menutype: {menutype} and reference: {reference}")
+
     if not menutype or not reference:
+        print("Error: Missing menutype or reference")
         return jsonify({"error": "Missing menutype or reference"}), 400  # Return an error if any field is missing
 
     # Find the withdrawal request in the list
     for request in withdrawal_requests:
         if request['menutype'] == menutype and request['reference'] == reference:
+            print(f"Found withdrawal request: {request}")
             return jsonify({"status": request['status']}), 200  # Return the status if found
 
+    print("Error: Withdrawal request not found")
     return jsonify({"error": "Withdrawal request not found"}), 404  # Return an error if not found
 
 
