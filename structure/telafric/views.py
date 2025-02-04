@@ -1441,3 +1441,58 @@ def get_reference_data(reference):
         if ref_dict['reference'] == reference:
             return jsonify(ref_dict), 200  # Return 200 OK if found
     return jsonify({"error": "Reference not found"}), 404  # Return 404 Not Found
+
+# Initialize the withdrawal_requests list
+withdrawal_requests = []
+
+@telafric.route('/api/withdrawalrequest', methods=['POST'])
+def withdrawal_request():
+    data = request.get_json()
+    
+    reference = data.get('reference')
+    menutype = data.get('menutype')
+    
+    if not reference or not menutype:
+        return jsonify({"error": "Missing reference or menutype"}), 400  # Return an error if any field is missing
+
+    # Create a new withdrawal request
+    new_request = {
+        "reference": reference,
+        "menutype": menutype,
+        "status": "pending"
+    }
+    
+    # Add the new request to the withdrawal_requests list
+    withdrawal_requests.append(new_request)
+    
+    return jsonify({"message": "Withdrawal request added successfully", "request": new_request}), 201  # Return success response
+
+@telafric.route('/api/redemption_status', methods=['GET'])
+def redemption_status():
+    menutype = request.args.get('menutype')
+    reference = request.args.get('reference')
+    
+    if not menutype or not reference:
+        return jsonify({"error": "Missing menutype or reference"}), 400  # Return an error if any field is missing
+
+    # Find the withdrawal request in the list
+    for request in withdrawal_requests:
+        if request['menutype'] == menutype and request['reference'] == reference:
+            return jsonify({"status": request['status']}), 200  # Return the status if found
+
+    return jsonify({"error": "Withdrawal request not found"}), 404  # Return an error if not found
+
+
+@telafric.route('/api/statement_request', methods=['GET'])
+def statement_request():
+    menutype = request.args.get('menutype')
+    reference = request.args.get('reference')
+    
+    if not menutype or not reference:
+        return jsonify({"error": "Missing menutype or reference"}), 400  # Return an error if any field is missing
+
+    # Here you can define the logic to generate or retrieve the statement link
+    # For demonstration, we'll return a dummy link
+    statement_link = f"https://example.com/statements/{reference}"
+
+    return jsonify({"link": statement_link}), 200  # Return the statement link
