@@ -1420,10 +1420,12 @@ def get_public_rates():
 
 #Infobip test thingy
 references = [
-    {"reference": "ref123", "data": "Data for ref123", "balance": 10.00},  # Example balance
-    {"reference": "abc456", "data": "Data for abc456", "balance": 20.00},  # Example balance
-    {"reference": "xyz789", "data": "Data for xyz789", "balance": 30.00},  # Example balance
+    {"reference": "ref123", "data": "Data for ref123", "balance": 10.00, "pending_credits": 5.00},  # Example balance and pending credits
+    {"reference": "abc456", "data": "Data for abc456", "balance": 20.00, "pending_credits": 3.00},  # Example balance and pending credits
+    {"reference": "xyz789", "data": "Data for xyz789", "balance": 30.00, "pending_credits": 0.00},  # Example balance and pending credits
 ]
+
+
 
 
 @app.route('/api/reference/<string:reference>', methods=['GET'])
