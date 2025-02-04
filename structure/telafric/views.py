@@ -1499,3 +1499,29 @@ def statement_request(menutype, reference):
     print(f"Generated statement link: {statement_link}")
 
     return jsonify({"link": statement_link}), 200  # Return the statement link
+
+@telafric.route('/api/withdrawal_requests', methods=['GET'])
+def get_withdrawal_requests():
+    print("Fetching all withdrawal requests")
+    
+    if not withdrawal_requests:
+        print("No withdrawal requests found")
+        return jsonify({"message": "No withdrawal requests found"}), 404  # Return a message if no requests exist
+
+    return jsonify(withdrawal_requests), 200  # Return the list of withdrawal requests
+
+@telafric.route('/api/pending_credits/<string:reference>', methods=['GET'])
+def get_pending_credits(reference):
+    print(f"Fetching pending credits for reference: {reference}")
+
+    # Search for the reference in the references list
+    for ref in references:
+        if ref["reference"] == reference:
+            print(f"Found pending credits: {ref['pending_credits']} for reference: {reference}")
+            return jsonify({
+                "reference": ref["reference"],
+                "pending_credits": ref["pending_credits"]
+            }), 200  # Return the pending credits if found
+
+    print("Error: Reference not found")
+    return jsonify({"error": "Reference not found"}), 404  # Return an error if the reference is not found
