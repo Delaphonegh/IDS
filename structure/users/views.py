@@ -65,7 +65,7 @@ connex_password = os.environ.get('connex_password')
 
 
 
-
+# @users.route('/', methods=['GET', 'POST'])
 @users.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
@@ -152,7 +152,7 @@ def logout():
 @users.route("/account", methods=['GET', 'POST'])
 @login_required
 def account():
-    userinfo = User.query.filter_by(email=session["email"]).first_or_404()
+    userinfo = User.query.filter_by(id=session["id"]).first_or_404()
 
     if request.method == 'POST':
         # Directly handle form data from request
@@ -288,7 +288,7 @@ def change_pin():
         new_pin = request.form.get('new_pin')
         confirm_new_pin = request.form.get('confirm_new_pin')
 
-        userinfo = User.query.filter_by(email=session["email"]).first_or_404()
+        userinfo = User.query.filter_by(id=session["id"]).first_or_404()
 
         # Check if the current PIN is correct
         if userinfo.pin_code != current_pin:
@@ -300,11 +300,16 @@ def change_pin():
             flash('New PIN and confirmation do not match.', 'danger')
             return redirect(url_for('users.change_pin'))
 
+        # Validate PIN format
+        if not new_pin.isdigit() or len(new_pin) != 4:
+            flash('PIN must be exactly 4 digits.', 'danger')
+            return redirect(url_for('users.change_pin'))
+
         # Update the user's PIN
         userinfo.pin_code = new_pin
         db.session.commit()
         flash('PIN changed successfully!', 'success')
-        return redirect(url_for('users.account'))  # Redirect to account page or any other page
+        return redirect(url_for('users.account'))  # Redirect to account page
 
     return render_template('ids/portal/change_pin.html')
 

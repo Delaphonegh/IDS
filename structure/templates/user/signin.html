@@ -1,11 +1,11 @@
 {% extends "user/base.html" %}
 {% block content %}
-<body class="min-h-screen bg-gradient-to-br from-purple-100 to-purple-200">
+<body class="min-h-screen bg-gradient-to-br from-[#DCEDC8] to-[#8BC34A]/20">
     <div class="container mx-auto min-h-screen flex items-center justify-center p-4">
         <div class="w-full max-w-5xl bg-white rounded-[2rem] shadow-xl overflow-hidden">
             <div class="flex flex-col md:flex-row">
-                <!-- Left Side - Space Theme -->
-                <div class="w-full md:w-1/2 bg-gradient-to-br from-purple-500 via-purple-600 to-indigo-700 p-12 relative overflow-hidden md:rounded-r-[2rem]">
+                <!-- Left Side - Theme -->
+                <div class="w-full md:w-1/2 bg-gradient-to-br from-[#8BC34A] to-[#689F38] p-12 relative overflow-hidden md:rounded-r-[2rem]">
                     <div class="h-full flex flex-col justify-between relative z-10">
                         <div class="text-white space-y-6">
                             <h2 class="text-4xl font-bold leading-tight">
@@ -13,11 +13,11 @@
                             </h2>
                             
                             <div class="mt-8">
-                                <img src="static/images/globe.jpg" alt="Astronaut" class="rounded-2xl shadow-lg"/>
+                                <img src="static/images/globe.jpg" alt="Connection" class="rounded-2xl shadow-lg"/>
                             </div>
                             
-                            <p class="text-sm text-purple-200 mt-4">
-                                Worldwide Coverage
+                            <p class="text-sm text-[#DCEDC8] mt-4">
+                                Affordable International Calls
                             </p>
                         </div>
                     </div>
@@ -29,7 +29,7 @@
                         <h1 class="text-2xl font-bold text-gray-800 mb-8">Welcome Back</h1>
                         
                         {% if session['loginmsg'] %}
-                        <div class="bg-purple-50 text-purple-800 p-4 rounded-lg mb-6">
+                        <div class="bg-[#DCEDC8] text-[#689F38] p-4 rounded-lg mb-6">
                             {{session['loginmsg']}}
                         </div>
                         {% endif %}
@@ -39,11 +39,11 @@
                             
                             <div class="space-y-2">
                                 <label for="email" class="block text-sm font-bold text-gray-700">
-                                    Email address or Number
+                                    Email address or Phone Number
                                 </label>
                                 <input type="text" name="email" id="email" 
                                     placeholder="Enter email or number" required
-                                    class="w-full px-4 py-3.5 rounded-lg bg-gray-50 border border-gray-100 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-gray-600"
+                                    class="w-full px-4 py-3.5 rounded-lg bg-gray-50 border border-gray-100 focus:border-[#8BC34A] focus:ring-2 focus:ring-[#DCEDC8] transition-all text-gray-600"
                                 >
                             </div>
                             
@@ -53,20 +53,20 @@
                                 </label>
                                 <input type="password" name="password" id="password" 
                                     placeholder="Enter password" required
-                                    class="w-full px-4 py-3.5 rounded-lg bg-gray-50 border border-gray-100 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-gray-600"
+                                    class="w-full px-4 py-3.5 rounded-lg bg-gray-50 border border-gray-100 focus:border-[#8BC34A] focus:ring-2 focus:ring-[#DCEDC8] transition-all text-gray-600"
                                 >
                             </div>
                             
                             <div class="flex items-center justify-between mt-2">
                                 <label class="flex items-center">
-                                    <input type="checkbox" class="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500">
+                                    <input type="checkbox" class="w-4 h-4 text-[#8BC34A] rounded border-gray-300 focus:ring-[#8BC34A]">
                                     <span class="ml-2 text-sm text-gray-600">Remember me</span>
                                 </label>
                             </div>
                             
                             <div class="pt-4">
                                 <button type="submit" 
-                                    class="w-full bg-purple-600 text-white py-3.5 px-6 rounded-full hover:bg-purple-700 transition-colors duration-200 font-medium"
+                                    class="w-full bg-[#8BC34A] text-white py-3.5 px-6 rounded-full hover:bg-[#689F38] transition-colors duration-200 font-medium"
                                 >
                                     Sign In
                                 </button>
@@ -78,18 +78,18 @@
                         <div class="text-center">
                             <p class="text-gray-500 text-sm">
                                 Don't have an account? 
-                                <a href="{{url_for('users.register')}}" class="text-purple-600 hover:text-purple-700 font-medium">
+                                <a href="{{url_for('users.register')}}" class="text-[#8BC34A] hover:text-[#689F38] font-medium">
                                     Sign up now
                                 </a>
                             </p>
                             <div class="mt-4 space-y-2">
                                 <p class="text-gray-500 text-sm">
-                                    <a href="{{url_for('users.forgot_password')}}" class="text-purple-600 hover:text-purple-700 font-medium">
+                                    <a href="{{url_for('users.forgot_password')}}" class="text-[#8BC34A] hover:text-[#689F38] font-medium">
                                         Forgot Password?
                                     </a>
                                 </p>
                                 <p class="text-gray-500 text-sm">
-                                    <a href="{{url_for('users.forgot_pin')}}" class="text-purple-600 hover:text-purple-700 font-medium">
+                                    <a href="{{url_for('users.forgot_pin')}}" class="text-[#8BC34A] hover:text-[#689F38] font-medium">
                                         Forgot PIN?
                                     </a>
                                 </p>
@@ -100,4 +100,4 @@
             </div>
         </div>
     </div>
-{%endblock%}
+{% endblock %}

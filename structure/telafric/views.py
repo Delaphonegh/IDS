@@ -188,6 +188,7 @@ def deduct_balance():
     # Extract parameters from request
     phone_number = unquote(request.args.get('phone_number', ''))
     duration = request.args.get('duration')
+    durationinsecs = duration
     destination = unquote(request.args.get('destination', ''))
 
     print("Extracted parameters:")
@@ -226,7 +227,9 @@ def deduct_balance():
         # Get the longest matching prefix (most specific)
         rate = max(matching_rates, key=lambda x: len(x.destination_prefix))
         print(f"Selected Rate: {rate}")
+        
         duration = math.ceil(float(duration) / 60)  # Convert string to float first, then calculate minutes
+        
 
         cost = float(duration) * rate.rate_per_minute  # Calculate cost based on the rate
         print("Calculated cost:", cost)
@@ -241,7 +244,7 @@ def deduct_balance():
             call_log = CallLog(
                 phone_number=phone_number,
                 destination=destination,
-                duration=duration,
+                duration=durationinsecs,
                 amount = cost,
                 subscriber=subscriber  # Assuming the relationship is set correctly
             )
@@ -287,6 +290,36 @@ def add_balance():
         db.session.commit()
         return jsonify({"balance": subscriber.balance}), 200  # Return the updated balance with a 200 status code
     return jsonify({"error": "Subscriber not found"}), 404  # Return an error if subscriber does not exist
+
+
+@telafric.route('/api/testcredit', methods=['GET'])
+def add_test_credit():
+    try:
+        # Get all users
+        users = User.query.all()
+        
+        # Update each user's balance
+        for user in users:
+            if user.balance is None or user.balance == 0:
+                user.balance = 3.00  # Set to $3 if balance is None or 0
+            else:
+                user.balance += 3.00  # Add $3 to existing balance
+        
+        # Commit the changes
+        db.session.commit()
+        
+        return jsonify({
+            "status": "success",
+            "message": "Updated all accounts' balances",
+            "accounts_updated": len(users)
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "status": "error",
+            "message": f"Failed to update accounts: {str(e)}"
+        }), 500
 
 
 @telafric.route('/api/get_rate', methods=['GET'])
@@ -541,7 +574,7 @@ def send_sms():
         'password': wirepick_key,
         'phone': phone_number,
         'text': f"Follow the link to top-up: {payment_link}",
-        'from': 'Delaphone'
+        'from': 'TelAfric'
     }
     
     print("SMS params:", sms_params)
@@ -872,8 +905,9 @@ def dashboard():
     
     
     # Fetch call logs and payments for the current user
-    call_logs = CallLog.query.filter_by(subscriber_id=current_user.id).all()
-    payments = Payment.query.filter_by(subscriber_id=current_user.id).all()
+    call_logs = CallLog.query.filter_by(subscriber_id=current_user.id).order_by(CallLog.timestamp.desc()).all()
+    payments = Payment.query.filter_by(subscriber_id=current_user.id).order_by(Payment.paid_at.desc()).all()
+
     
     return render_template('ids/portal/dashboard.html', call_logs=call_logs, payments=payments,user =current_user)
 
@@ -1149,11 +1183,12 @@ def view_call_logs():
         return redirect(url_for('auth.login'))  # Redirect to login if not authenticated
 
     search_query = request.args.get('search', '')  # Get the search query from the request
-    call_logs = CallLog.query.filter_by(subscriber_id=current_user.id)
+    call_logs_q = CallLog.query.filter_by(subscriber_id=current_user.id).all()
+    call_logs = CallLog.query.filter_by(subscriber_id=current_user.id).order_by(CallLog.timestamp.desc()).all()
 
     if search_query:
         # Filter call logs based on the search query
-        call_logs = call_logs.filter(
+        call_logs = call_logs_q.filter(
             (CallLog.phone_number.like(f'%{search_query}%')) |  # Search by phone number
             (CallLog.destination.like(f'%{search_query}%')) |  # Search by destination
             (CallLog.duration.like(f'%{search_query}%')) |  # Search by duration
@@ -1161,7 +1196,7 @@ def view_call_logs():
             # Add more fields to search as needed
         )
 
-    call_logs = call_logs.all()  # Execute the query
+    call_logs = call_logs# Execute the query
 
     return render_template('ids/portal/call_logs.html', call_logs=call_logs, search_query=search_query)
 
@@ -1171,7 +1206,8 @@ def view_payments():
     if not current_user.is_authenticated:
         return redirect(url_for('auth.login'))  # Redirect to login if not authenticated
 
-    payments = Payment.query.filter_by(subscriber_id=current_user.id).all()  # Fetch payments for the current user
+    # payments = Payment.query.filter_by(subscriber_id=current_user.id).all()  # Fetch payments for the current user
+    payments = Payment.query.filter_by(subscriber_id=current_user.id).order_by(Payment.paid_at.desc()).all()
     return render_template('ids/portal/payments.html', payments=payments,user=current_user)
 
 
@@ -1180,7 +1216,10 @@ def view_payments():
 
 
 
-
+@telafric.route('/',methods=['GET'])
+def home():
+    return render_template('ids/web/index.html') 
+    
 
 
 
@@ -1331,11 +1370,59 @@ def edit_admin(admin_id):
 
 
 
+
+@telafric.route('/api/public_rates', methods=['GET'])
+def get_public_rates():
+    # Get search term from query parameters (if any)
+    search_term = request.args.get('search', '').lower()
+    
+    # Query all rates from database
+    rates_query = Rate.query.all()
+    
+    # If there's a search term, filter the results
+    if search_term:
+        rates_query = Rate.query.filter(Rate.description.ilike(f'%{search_term}%')).all()
+    
+    # Get all rates or filtered rates
+    rates = rates_query
+    
+    # Format the rates for the frontend
+    formatted_rates = []
+    for rate in rates:
+        # Map country codes to flag emojis and full names
+        country_data = {
+            '233': {'flag': '🇬🇭', 'name': 'Ghana'},
+            '234': {'flag': '🇳🇬', 'name': 'Nigeria'},
+            '44': {'flag': '🇬🇧', 'name': 'United Kingdom'},
+            # Add more countries as needed
+        }
+        
+        # Get country data based on prefix, or use defaults
+        country_code = rate.destination_prefix
+        country_info = country_data.get(country_code, {
+            'flag': '🌍',
+            'name': rate.description or f'Country (+{country_code})'
+        })
+        
+        formatted_rates.append({
+            'id': rate.id,
+            'country_code': country_code,
+            'flag': country_info['flag'],
+            'country_name': country_info['name'],
+            'rate': rate.rate_per_minute,
+            'description': rate.description
+        })
+    
+    return jsonify(formatted_rates)
+
+
+
+
 #Infobip test thingy
 references = [
-    {"reference": "ref123", "data": "Data for ref123"},
-    {"reference": "abc456", "data": "Data for abc456"},
-    {"reference": "xyz789", "data": "Data for xyz789"},
+    {"reference": "ref123", "data": "Data for ref123", "balance": 10.00},  # Example balance
+    {"reference": "abc456", "data": "Data for abc456", "balance": 20.00},  # Example balance
+    {"reference": "xyz789", "data": "Data for xyz789", "balance": 30.00},  # Example balance
 ]
 
 

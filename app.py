@@ -22,6 +22,6 @@ if __name__ == '__main__':
     socketio.run(
     app,
     host='0.0.0.0',  # Allow external access
-    port=5058,        # Specify your port
+    port=5001,        # Specify your port
     allow_unsafe_werkzeug=True
 )

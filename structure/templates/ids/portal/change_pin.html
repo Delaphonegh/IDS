@@ -19,14 +19,39 @@
         .btn {
             margin-right: 10px;
         }
+        .alert {
+            margin-bottom: 1rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.25rem;
+        }
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
     </style>
 
-</head>
-<body>
     <div class="container">
         <div class="card p-4">
             <h1 class="h4">Change Your PIN</h1>
-            <form method="POST" class="mt-4">
+            
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" class="mt-4" id="changePinForm">
                 <div class="form-group">
                     <label for="current_pin">Current PIN:</label>
                     <input type="password" name="current_pin" class="form-control" required>
@@ -41,9 +66,40 @@
                 </div>
                 <div class="form-group">
                     <button type="submit" class="btn btn-primary">Change PIN</button>
+                    <a href="{{ url_for('users.account') }}" class="btn btn-secondary">Cancel</a>
                 </div>
             </form>
         </div>
     </div>
-</body>
+
+    <script>
+        document.getElementById('changePinForm').addEventListener('submit', function(e) {
+            const newPin = document.querySelector('input[name="new_pin"]').value;
+            const confirmPin = document.querySelector('input[name="confirm_new_pin"]').value;
+
+            // Check if PINs match
+            if (newPin !== confirmPin) {
+                e.preventDefault();
+                alert('New PIN and Confirm PIN do not match!');
+                return;
+            }
+
+            // Validate PIN format (4 digits)
+            if (!/^\d{4}$/.test(newPin)) {
+                e.preventDefault();
+                alert('PIN must be exactly 4 digits!');
+                return;
+            }
+        });
+
+        // Show success message if PIN was changed successfully
+        {% if 'success' in get_flashed_messages(category_filter=['success']) %}
+            window.onload = function() {
+                alert('PIN changed successfully! You will be redirected to your profile.');
+                setTimeout(function() {
+                    window.location.href = "{{ url_for('users.account') }}";
+                }, 1500);
+            }
+        {% endif %}
+    </script>
 {% endblock %}

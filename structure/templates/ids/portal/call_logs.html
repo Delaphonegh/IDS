@@ -37,13 +37,13 @@
                 <div class="grid grid-cols-4 gap-4 items-center">
                     <div class="flex items-center">
                        
-                        <div class="font-medium text-gray-900">{{ log.phone_number }}</div>
+                        <div class="font-medium text-gray-900">{{ log.destination }}</div>
                     </div>
                     <div class="text-sm text-gray-500">
-                        {{ log.timestamp.strftime('%B %d, %Y') }}
+                        {{ log.timestamp.strftime('%B %d, %Y, %I:%M %p') }}
                     </div>
                     <div class="text-sm text-gray-500">
-                        {{ log.duration }} secs
+                        {{ log.duration // 60 }}m {{ log.duration % 60 }}s
                     </div>
                     <div class="text-sm font-medium text-green-600">
                         ${{ log.amount }}
